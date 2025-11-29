@@ -5,7 +5,7 @@ import App from "./App.jsx";
 import { Provider } from "react-redux";
 import store from "./redux/store";
 
-export const server = "http://localhost:5000";
+export const server = "https://easybudgetai.onrender.com";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
