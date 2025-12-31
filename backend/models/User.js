@@ -19,6 +19,19 @@ const schema = new mongoose.Schema(
       type: String,
       default: "user",
     },
+    telegramUserId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    telegramUsername: {
+      type: String,
+      default: null,
+    },
+    telegramLinkedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

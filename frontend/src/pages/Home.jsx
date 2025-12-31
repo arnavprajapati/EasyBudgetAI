@@ -49,11 +49,14 @@ const Home = () => {
                 <p className="text-sm text-purple-100">Track your progress</p>
               </div>
 
-              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+              <button
+                onClick={() => navigate("/settings")}
+                className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-left"
+              >
                 <div className="text-4xl mb-2">⚙️</div>
                 <h3 className="text-lg font-semibold mb-1">Settings</h3>
                 <p className="text-sm text-green-100">Manage your account</p>
-              </div>
+              </button>
             </div>
           </div>
         </div>

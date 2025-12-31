@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const server = "https://easybudgetai.onrender.com";
+const server = import.meta.env.VITE_API_SERVER || "http://localhost:5000";
 
 const getCookie = (name) => {
   const value = `; ${document.cookie}`;
