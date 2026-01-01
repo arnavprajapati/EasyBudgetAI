@@ -30,6 +30,7 @@ Allowed categories (STRICT - use exactly as written):
 - Food & Dining
 - Travel & Transport
 - Housing / Rent
+- Shopping & Entertainment
 - Bills & Utilities
 - Personal & Transfers
 - Miscellaneous
@@ -38,6 +39,7 @@ Category mapping examples:
 - "chai", "khana", "roti", "paneer", "juice", "zomato", "swiggy", "groceries", "nashta", "lunch", "dinner" → Food & Dining
 - "uber", "ola", "auto", "petrol", "bus", "metro", "rapido", "cab", "taxi", "parking" → Travel & Transport
 - "rent", "bijli", "electricity", "water bill", "gas bill", "maintenance", "ghar" → Housing / Rent
+- "shopping", "movie", "cinema", "theater", "concert", "game", "entertainment" → Shopping & Entertainment
 - "recharge", "wifi", "netflix", "mobile", "internet", "subscription", "gym" → Bills & Utilities
 - "friend ko diye", "sent to", "given to", "transfer", "upi", "udhar" → Personal & Transfers
 - Anything unclear → Miscellaneous
@@ -89,6 +91,7 @@ Remember: Return ONLY valid JSON, nothing else.`;
         const validCategories = [
             "Food & Dining",
             "Travel & Transport",
+            "Shopping & Entertainment",
             "Housing / Rent",
             "Bills & Utilities",
             "Personal & Transfers",
@@ -126,6 +129,7 @@ const fallbackParser = (messageText) => {
     const categoryKeywords = {
         "Food & Dining": ["chai", "tea", "coffee", "khana", "food", "lunch", "dinner", "breakfast", "nashta", "juice", "zomato", "swiggy", "grocery", "sabzi"],
         "Travel & Transport": ["auto", "uber", "ola", "rapido", "cab", "taxi", "petrol", "diesel", "bus", "metro", "train", "parking"],
+        "Shopping & Entertainment": ["shopping", "movie", "cinema", "theater", "concert", "game", "entertainment"],
         "Housing / Rent": ["rent", "kiraya", "bijli", "electricity", "water", "gas", "maintenance"],
         "Bills & Utilities": ["recharge", "mobile", "wifi", "internet", "netflix", "subscription", "gym"],
         "Personal & Transfers": ["ko diya", "ko diye", "given", "sent", "transfer", "upi", "udhar"],
@@ -192,6 +196,7 @@ const getCategoryEmoji = (category) => {
     const emojis = {
         "Food & Dining": "🍽️",
         "Travel & Transport": "🚗",
+        "Shopping & Entertainment": "🛍️",
         "Housing / Rent": "🏠",
         "Bills & Utilities": "📱",
         "Personal & Transfers": "💸",

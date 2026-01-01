@@ -22,6 +22,7 @@ export const addExpense = TryCatch(async (req, res) => {
     const validCategories = [
         "Food & Dining",
         "Travel & Transport",
+        "Shopping & Entertainment",
         "Housing / Rent",
         "Bills & Utilities",
         "Personal & Transfers",
@@ -58,6 +59,7 @@ export const addBulkExpenses = TryCatch(async (req, res) => {
     const validCategories = [
         "Food & Dining",
         "Travel & Transport",
+        "Shopping & Entertainment",
         "Housing / Rent",
         "Bills & Utilities",
         "Personal & Transfers",

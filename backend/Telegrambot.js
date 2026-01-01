@@ -156,6 +156,7 @@ Simply send your expenses in natural language:
 <b>📂 Categories (Auto-detected):</b>
 🍽️ Food & Dining
 🚗 Travel & Transport
+🛍️ Shopping & Entertainment
 🏠 Housing / Rent
 📱 Bills & Utilities
 💸 Personal & Transfers
@@ -375,6 +376,7 @@ const getCategoryEmoji = (category) => {
     const emojis = {
         "Food & Dining": "🍽️",
         "Travel & Transport": "🚗",
+        "Shopping & Entertainment": "🛍️",
         "Housing / Rent": "🏠",
         "Bills & Utilities": "📱",
         "Personal & Transfers": "💸",
