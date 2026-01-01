@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { User } from './models/User.js';
 import { TelegramOTP } from './models/TelegramOTP.js';
+import { saveExpensesFromTelegram } from './controllers/expense.js';
+import { formatExpenseResponse } from './config/expenseParser.js';
 
 dotenv.config();
 
@@ -22,23 +24,19 @@ if (!BOT_TOKEN) {
     process.exit(1);
 }
 
-// Create bot with polling (no webhook needed!)
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 console.log("🤖 Bot is running and listening for messages...");
 
-// Handle /start command
 bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
     const telegramUserId = msg.from.id.toString();
     const telegramUsername = msg.from.username || null;
 
     try {
-        // Check if user already has linked account
         const existingUser = await User.findOne({ telegramUserId });
 
         if (existingUser) {
-            // Already linked
             const linkedMessage = `✅ <b>Account Already Linked</b>
 
 Your Telegram account is already linked to SmartKhata.
@@ -48,11 +46,16 @@ Your Telegram account is already linked to SmartKhata.
 📱 <b>Telegram:</b> @${existingUser.telegramUsername || 'N/A'}
 🔗 <b>Linked on:</b> ${existingUser.telegramLinkedAt ? new Date(existingUser.telegramLinkedAt).toLocaleDateString() : 'N/A'}
 
-<i>You're all set! You'll receive notifications and updates from SmartKhata here.</i>`;
+<b>💡 Quick Commands:</b>
+• Send expenses like: <code>50 chai, 200 auto</code>
+• /help - View all commands
+• /today - Today's expenses
+• /summary - Monthly summary
+
+<i>You're all set! Start tracking your expenses.</i>`;
 
             await bot.sendMessage(chatId, linkedMessage, { parse_mode: 'HTML' });
         } else {
-            // Not linked - check if there's a pending OTP for this username
             if (!telegramUsername) {
                 const noUsernameMessage = `❌ <b>No Username Found</b>
 
@@ -130,21 +133,161 @@ I couldn't find any pending OTP for your username (@${telegramUsername}).
     }
 });
 
-// Handle OTP messages (6 digits)
+bot.onText(/\/help/, async (msg) => {
+    const chatId = msg.chat.id;
+
+    const helpMessage = `📖 <b>SmartKhata Bot Help</b>
+
+<b>💰 Adding Expenses:</b>
+Simply send your expenses in natural language:
+
+<code>50 chai</code>
+<code>200 auto, 150 lunch</code>
+<code>1000 rent
+300 bijli
+50 recharge</code>
+
+<b>📊 Commands:</b>
+/start - Check account status
+/help - Show this help message
+/today - Today's expenses
+/summary - This month's summary
+
+<b>📂 Categories (Auto-detected):</b>
+🍽️ Food & Dining
+🚗 Travel & Transport
+🏠 Housing / Rent
+📱 Bills & Utilities
+💸 Personal & Transfers
+📦 Miscellaneous
+
+<i>Tip: You can write in Hinglish too!</i>`;
+
+    await bot.sendMessage(chatId, helpMessage, { parse_mode: 'HTML' });
+});
+
+bot.onText(/\/today/, async (msg) => {
+    const chatId = msg.chat.id;
+    const telegramUserId = msg.from.id.toString();
+
+    try {
+        const user = await User.findOne({ telegramUserId });
+
+        if (!user) {
+            await bot.sendMessage(chatId, "❌ Your account is not linked. Use /start to link your account.");
+            return;
+        }
+
+        const { Expense } = await import('./models/Expense.js');
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const expenses = await Expense.find({
+            userId: user._id,
+            date: { $gte: today },
+        }).sort({ createdAt: -1 });
+
+        if (expenses.length === 0) {
+            await bot.sendMessage(chatId, `📅 <b>Today's Expenses</b>\n\nNo expenses recorded today.\n\n<i>Send expenses like: 50 chai, 200 auto</i>`, { parse_mode: 'HTML' });
+            return;
+        }
+
+        const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+        let message = `📅 <b>Today's Expenses</b>\n\n`;
+
+        expenses.forEach((exp, index) => {
+            const emoji = getCategoryEmoji(exp.category);
+            message += `${index + 1}. ${emoji} ₹${exp.amount} - ${exp.description}\n`;
+        });
+
+        message += `\n💰 <b>Total:</b> ₹${total}`;
+
+        await bot.sendMessage(chatId, message, { parse_mode: 'HTML' });
+    } catch (error) {
+        console.error("Error in /today:", error);
+        await bot.sendMessage(chatId, "❌ Something went wrong. Please try again.");
+    }
+});
+
+bot.onText(/\/summary/, async (msg) => {
+    const chatId = msg.chat.id;
+    const telegramUserId = msg.from.id.toString();
+
+    try {
+        const user = await User.findOne({ telegramUserId });
+
+        if (!user) {
+            await bot.sendMessage(chatId, "❌ Your account is not linked. Use /start to link your account.");
+            return;
+        }
+
+        const { Expense } = await import('./models/Expense.js');
+
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const summary = await Expense.aggregate([
+            {
+                $match: {
+                    userId: user._id,
+                    date: { $gte: startOfMonth },
+                },
+            },
+            {
+                $group: {
+                    _id: "$category",
+                    total: { $sum: "$amount" },
+                    count: { $sum: 1 },
+                },
+            },
+            {
+                $sort: { total: -1 },
+            },
+        ]);
+
+        if (summary.length === 0) {
+            await bot.sendMessage(chatId, `📊 <b>Monthly Summary</b>\n\nNo expenses recorded this month.\n\n<i>Send expenses like: 50 chai, 200 auto</i>`, { parse_mode: 'HTML' });
+            return;
+        }
+
+        const totalExpense = summary.reduce((sum, cat) => sum + cat.total, 0);
+        const monthName = new Date().toLocaleString('default', { month: 'long' });
+
+        let message = `📊 <b>${monthName} Summary</b>\n\n`;
+
+        summary.forEach((cat) => {
+            const emoji = getCategoryEmoji(cat._id);
+            const percentage = ((cat.total / totalExpense) * 100).toFixed(1);
+            message += `${emoji} <b>${cat._id}</b>\n`;
+            message += `   ₹${cat.total} (${cat.count} items) - ${percentage}%\n\n`;
+        });
+
+        message += `💰 <b>Total:</b> ₹${totalExpense}`;
+
+        await bot.sendMessage(chatId, message, { parse_mode: 'HTML' });
+    } catch (error) {
+        console.error("Error in /summary:", error);
+        await bot.sendMessage(chatId, "❌ Something went wrong. Please try again.");
+    }
+});
+
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text?.trim();
     const telegramUserId = msg.from.id.toString();
     const telegramUsername = msg.from.username || null;
 
-    if (text?.startsWith('/')) return;
+    if (!text || text.startsWith('/')) return;
 
     const otpRegex = /^\d{6}$/;
     if (otpRegex.test(text)) {
         try {
             const otpRecord = await TelegramOTP.findOne({
                 otp: text,
-                used: true, 
+                used: true,
                 expiresAt: { $gt: new Date() },
             }).populate("userId");
 
@@ -198,33 +341,47 @@ Your Telegram account has been linked to ${user.email}
 👤 <b>Name:</b> ${user.name}
 📱 <b>Telegram:</b> @${user.telegramUsername}
 
-<i>You will now receive notifications and updates from SmartKhata directly in Telegram.</i>`;
+<b>💡 You can now:</b>
+• Send expenses like: <code>50 chai, 200 auto</code>
+• Use /today to see today's expenses
+• Use /summary for monthly summary
+
+<i>Start tracking your expenses now!</i>`;
 
             await bot.sendMessage(chatId, successMessage, { parse_mode: 'HTML' });
+            return;
         } catch (error) {
             console.error("Error verifying OTP:", error);
             await bot.sendMessage(chatId, "❌ Sorry, something went wrong. Please try again.");
+            return;
         }
-    } else if (text && text.length > 0) {
-        // Not an OTP - send help
-        const helpMessage = `❓ <b>How to Link Your Account</b>
+    }
 
-To link your Telegram account:
+    try {
+        const result = await saveExpensesFromTelegram(telegramUserId, text);
 
-1. Go to SmartKhata website
-2. Settings → Telegram Integration  
-3. Enter username: <code>${telegramUsername || 'your_username'}</code>
-4. Click "Generate OTP"
-5. Send <b>/start</b> to me
-6. I'll send you a 6-digit OTP
-7. <b>Copy and paste</b> it on the website
-8. Click "Verify & Link"
-
-<i>The OTP goes on the website, not here!</i>`;
-
-        await bot.sendMessage(chatId, helpMessage, { parse_mode: 'HTML' });
+        if (result.success) {
+            const message = formatExpenseResponse({ expenses: result.expenses });
+            await bot.sendMessage(chatId, message, { parse_mode: 'HTML' });
+        } else if (result.message) {
+            await bot.sendMessage(chatId, `❌ ${result.message}`);
+        }
+    } catch (error) {
+        console.error("Error processing message:", error);
     }
 });
+
+const getCategoryEmoji = (category) => {
+    const emojis = {
+        "Food & Dining": "🍽️",
+        "Travel & Transport": "🚗",
+        "Housing / Rent": "🏠",
+        "Bills & Utilities": "📱",
+        "Personal & Transfers": "💸",
+        "Miscellaneous": "📦",
+    };
+    return emojis[category] || "📦";
+};
 
 bot.on('polling_error', (error) => {
     console.error("❌ Polling error:", error.code, error.message);

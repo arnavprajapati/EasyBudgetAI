@@ -5,7 +5,7 @@ import App from "./App.jsx";
 import { Provider } from "react-redux";
 import store from "./redux/store";
 
-export const server = import.meta.env.VITE_API_SERVER
+export const server = import.meta.env.VITE_API_SERVER || "http://localhost:5000";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
