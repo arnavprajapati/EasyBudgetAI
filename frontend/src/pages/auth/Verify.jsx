@@ -32,12 +32,12 @@ const Verify = () => {
       {loading ? (
         <Loading />
       ) : (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-white flex items-center justify-center p-4">
           <div className="max-w-md w-full">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 text-center">
+            <div className="bg-white rounded-xl shadow-2xl p-8 text-center">
               {successMessage ? (
                 <>
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-400 to-green-500 rounded-full mb-6">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-green-500 rounded-full mb-6">
                     <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
@@ -50,14 +50,14 @@ const Verify = () => {
                   </p>
                   <Link
                     to="/login"
-                    className="inline-block bg-gradient-to-r from-[#387ED1] to-[#2868b8] hover:from-[#2868b8] hover:to-[#1d5299] text-white font-semibold px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+                    className="inline-block bg-[#387ED1] hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg transition duration-200"
                   >
                     Go to Login
                   </Link>
                 </>
               ) : (
                 <>
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-red-400 to-red-500 rounded-full mb-6">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-red-500 rounded-full mb-6">
                     <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -70,7 +70,7 @@ const Verify = () => {
                   </p>
                   <Link
                     to="/register"
-                    className="inline-block bg-gradient-to-r from-[#387ED1] to-[#2868b8] hover:from-[#2868b8] hover:to-[#1d5299] text-white font-semibold px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+                    className="inline-block bg-[#387ED1] hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg transition duration-200"
                   >
                     Back to Register
                   </Link>

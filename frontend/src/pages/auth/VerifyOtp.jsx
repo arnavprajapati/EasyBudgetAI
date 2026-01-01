@@ -37,30 +37,28 @@ const VerifyOtp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#387ED1] to-[#2868b8] rounded-full mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Verify OTP</h2>
-            <p className="text-gray-600">Enter the code sent to your email</p>
-          </div>
+    <div className="min-h-screen fixed inset-0 z-50 flex items-center justify-center bg-opacity-70 backdrop-blur-md p-4 transition-opacity duration-300">
+      <div className="max-w-sm w-full">
+        <div className="bg-white rounded-xl shadow-2xl p-8">
+          
+          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+            Verify OTP
+          </h2>
+          
+          <p className="text-gray-600 font-bold text-center mb-6">
+            Enter the code sent to your email
+          </p>
 
-          <form onSubmit={submitHandler} className="space-y-5">
-            <div>
-              <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+          <form onSubmit={submitHandler}>
+            <div className="mb-6">
+              <label className="block text-gray-700 font-semibold mb-2">
                 One-Time Password
               </label>
               <input
                 type="number"
-                id="otp"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#387ED1] focus:border-transparent outline-none transition-all duration-200 text-center text-2xl tracking-widest"
+                className="w-full font-semibold px-4 py-3 border rounded-lg focus:ring-[#387ED1] focus:border-[#387ED1] text-center text-xl tracking-widest"
                 placeholder="000000"
                 required
               />
@@ -69,29 +67,19 @@ const VerifyOtp = () => {
             <button
               type="submit"
               disabled={btnLoading}
-              className="w-full bg-gradient-to-r from-[#387ED1] to-[#2868b8] hover:from-[#2868b8] hover:to-[#1d5299] text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full py-3 cursor-pointer bg-[#387ED1] text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200 disabled:bg-gray-400"
             >
-              {btnLoading ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Verifying...
-                </span>
-              ) : (
-                "Verify OTP"
-              )}
+              {btnLoading ? 'Verifying...' : 'Verify OTP'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              Back to{" "}
-              <Link to="/login" className="text-[#387ED1] hover:text-[#2868b8] font-semibold hover:underline">
-                Login
-              </Link>
-            </p>
+          <div className="mt-4 text-center text-sm">
+            <Link 
+              to="/login" 
+              className="text-gray-600 cursor-pointer hover:text-[#387ED1] font-semibold"
+            >
+              Back to Login
+            </Link>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../redux/slices/authSlice";
+import { LogOut, User as UserIcon } from "lucide-react"; // Added icons
 
 const Home = () => {
   const { user } = useSelector((state) => state.auth);
@@ -13,52 +14,41 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                  Welcome Back! 👋
-                </h1>
-                {user && (
-                  <p className="text-gray-600">
-                    Hello, <span className="font-semibold text-[#387ED1]">{user.name}</span>
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={handleLogout}
-                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-              >
-                Logout
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-              <div className="bg-gradient-to-br from-[#387ED1] to-[#2868b8] rounded-xl p-6 text-white shadow-lg">
-                <div className="text-4xl mb-2">🎯</div>
-                <h3 className="text-lg font-semibold mb-1">Dashboard</h3>
-                <p className="text-sm text-blue-100">View your overview</p>
-              </div>
-
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
-                <div className="text-4xl mb-2">📊</div>
-                <h3 className="text-lg font-semibold mb-1">Analytics</h3>
-                <p className="text-sm text-purple-100">Track your progress</p>
-              </div>
-
-              <button
-                onClick={() => navigate("/settings")}
-                className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-left"
-              >
-                <div className="text-4xl mb-2">⚙️</div>
-                <h3 className="text-lg font-semibold mb-1">Settings</h3>
-                <p className="text-sm text-green-100">Manage your account</p>
-              </button>
-            </div>
+    <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="h-32 bg-[#387ED1] flex items-center justify-center">
+          <div className="bg-white p-3 rounded-full shadow-lg">
+            <UserIcon size={40} className="text-[#387ED1]" />
           </div>
+        </div>
+
+        <div className="p-8 text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            Welcome back,
+          </h1>
+          <p className="text-3xl font-extrabold text-[#387ED1] mb-6">
+            {user ? user.name : "Guest User"}
+          </p>
+          
+          <div className="space-y-4">
+            <p className="text-gray-500 text-sm font-black">
+              You are successfully logged into your account.
+            </p>
+            
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 font-semibold rounded-lg hover:bg-red-100 transition-colors duration-200 cursor-pointer border border-red-100"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 py-4 px-8 text-center border-t border-gray-100">
+          <p className="text-xs text-gray-400 font-bold">
+            Account Security: Active
+          </p>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { server } from "../../main";
+import { X } from "lucide-react"; 
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -29,46 +30,45 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#387ED1] to-[#2868b8] rounded-full mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h2>
-            <p className="text-gray-600">Sign in to your account</p>
-          </div>
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="max-w-sm w-full relative">
+        <div className="bg-white rounded-xl shadow-2xl p-8 relative">
 
-          <form onSubmit={submitHandler} className="space-y-5">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+          <button
+            onClick={() => navigate("/")}
+            className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={24} />
+          </button>
+
+          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+            Log In
+          </h2>
+
+          <form onSubmit={submitHandler}>
+            <div className="mb-4">
+              <label className="block text-gray-700 font-semibold mb-2">
+                Email
               </label>
               <input
                 type="email"
-                id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#387ED1] focus:border-transparent outline-none transition-all duration-200"
-                placeholder="Enter your email"
+                className="w-full font-semibold px-4 py-2 border rounded-lg focus:ring-[#387ED1] focus:border-[#387ED1]"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="mb-6">
+              <label className="block text-gray-700 font-semibold mb-2">
                 Password
               </label>
               <input
                 type="password"
-                id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#387ED1] focus:border-transparent outline-none transition-all duration-200"
-                placeholder="Enter your password"
+                className="w-full font-semibold px-4 py-2 border rounded-lg focus:ring-[#387ED1] focus:border-[#387ED1]"
                 required
               />
             </div>
@@ -76,29 +76,19 @@ const Login = () => {
             <button
               type="submit"
               disabled={btnLoading}
-              className="w-full bg-gradient-to-r from-[#387ED1] to-[#2868b8] hover:from-[#2868b8] hover:to-[#1d5299] text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full py-3 cursor-pointer bg-[#387ED1] text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200 disabled:bg-gray-400"
             >
-              {btnLoading ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                "Sign In"
-              )}
+              {btnLoading ? 'Processing...' : 'Login'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              Don't have an account?{" "}
-              <Link to="/register" className="text-[#387ED1] hover:text-[#2868b8] font-semibold hover:underline">
-                Sign up
-              </Link>
-            </p>
+          <div className="mt-4 text-center text-sm">
+            <Link
+              to="/register"
+              className="text-gray-600 cursor-pointer hover:text-[#387ED1] font-semibold"
+            >
+              Don't have an account? Register here.
+            </Link>
           </div>
         </div>
       </div>

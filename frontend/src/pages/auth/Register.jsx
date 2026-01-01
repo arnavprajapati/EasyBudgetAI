@@ -1,14 +1,16 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; 
 import { toast } from "react-toastify";
 import axios from "axios";
 import { server } from "../../main";
+import { X } from "lucide-react";
 
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [btnLoading, setBtnLoading] = useState(false);
+  const navigate = useNavigate(); 
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -31,61 +33,58 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#387ED1] to-[#2868b8] rounded-full mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h2>
-            <p className="text-gray-600">Sign up to get started</p>
-          </div>
+    <div className="min-h-screen fixed inset-0 z-50 flex items-center justify-center bg-opacity-70 backdrop-blur-md p-4 transition-opacity duration-300">
+      <div className="max-w-sm w-full relative">
+        <div className="bg-white rounded-xl shadow-2xl p-8 relative">
 
-          <form onSubmit={submitHandler} className="space-y-5">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+          <button
+            onClick={() => navigate("/")}
+            className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={24} />
+          </button>
+
+          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+            Register
+          </h2>
+
+          <form onSubmit={submitHandler}>
+            <div className="mb-4">
+              <label className="block text-gray-700 font-semibold mb-2">
                 Full Name
               </label>
               <input
                 type="text"
-                id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#387ED1] focus:border-transparent outline-none transition-all duration-200"
-                placeholder="Enter your name"
+                className="w-full font-semibold px-4 py-2 border rounded-lg focus:ring-[#387ED1] focus:border-[#387ED1]"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+            <div className="mb-4">
+              <label className="block text-gray-700 font-semibold mb-2">
+                Email
               </label>
               <input
                 type="email"
-                id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#387ED1] focus:border-transparent outline-none transition-all duration-200"
-                placeholder="Enter your email"
+                className="w-full font-semibold px-4 py-2 border rounded-lg focus:ring-[#387ED1] focus:border-[#387ED1]"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="mb-6">
+              <label className="block text-gray-700 font-semibold mb-2">
                 Password
               </label>
               <input
                 type="password"
-                id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#387ED1] focus:border-transparent outline-none transition-all duration-200"
-                placeholder="Create a password"
+                className="w-full font-semibold px-4 py-2 border rounded-lg focus:ring-[#387ED1] focus:border-[#387ED1]"
                 required
               />
             </div>
@@ -93,29 +92,19 @@ const Register = () => {
             <button
               type="submit"
               disabled={btnLoading}
-              className="w-full bg-gradient-to-r from-[#387ED1] to-[#2868b8] hover:from-[#2868b8] hover:to-[#1d5299] text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full py-3 cursor-pointer bg-[#387ED1] text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200 disabled:bg-gray-400"
             >
-              {btnLoading ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Creating account...
-                </span>
-              ) : (
-                "Create Account"
-              )}
+              {btnLoading ? 'Processing...' : 'Register'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              Already have an account?{" "}
-              <Link to="/login" className="text-[#387ED1] hover:text-[#2868b8] font-semibold hover:underline">
-                Sign in
-              </Link>
-            </p>
+          <div className="mt-4 text-center text-sm">
+            <Link
+              to="/login"
+              className="text-gray-600 cursor-pointer hover:text-[#387ED1] font-semibold"
+            >
+              Already have an account? Login here.
+            </Link>
           </div>
         </div>
       </div>
