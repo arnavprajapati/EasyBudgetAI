@@ -1,8 +1,10 @@
 import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import AppLayout from "./pages/app-layout";
+import LandingPage from "./pages/LandingPage";
 import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import VerifyOtp from "./pages/auth/VerifyOtp";
@@ -12,7 +14,7 @@ import Settings from "./pages/Settings";
 import Loading from "./Loding";
 import { fetchUser } from "./redux/slices/authSlice";
 
-const App = () => {
+const AppContent = () => {
   const { isAuth, loading } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
@@ -20,48 +22,67 @@ const App = () => {
     dispatch(fetchUser());
   }, [dispatch]);
 
+  const router = createBrowserRouter([
+    {
+      path: "/login",
+      element: !isAuth ? <Login /> : <Navigate to="/" replace />
+    },
+    {
+      path: "/register",
+      element: !isAuth ? <Register /> : <Navigate to="/" replace />
+    },
+    {
+      path: "/verifyotp",
+      element: !isAuth ? <VerifyOtp /> : <Navigate to="/" replace />
+    },
+    {
+      path: "/token/:token",
+      element: !isAuth ? <Verify /> : <Navigate to="/" replace />
+    },
+    {
+      element: <AppLayout />,
+      children: [
+        {
+          path: "/",
+          element: isAuth ? <Home /> : <LandingPage />
+        },
+        {
+          path: "/home",
+          element: isAuth ? <Home /> : <Navigate to="/login" replace />
+        },
+        {
+          path: "/settings",
+          element: isAuth ? <Settings /> : <Navigate to="/login" replace />
+        }
+      ]
+    }
+  ]);
+
+  if (loading) {
+    return <Loading />;
+  }
+
   return (
     <>
-      {loading ? (
-        <Loading />
-      ) : (
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={isAuth ? <Home /> : <Login />} />
-            <Route path="/login" element={isAuth ? <Home /> : <Login />} />
-            <Route
-              path="/register"
-              element={isAuth ? <Home /> : <Register />}
-            />
-            <Route
-              path="/verifyotp"
-              element={isAuth ? <Home /> : <VerifyOtp />}
-            />
-            <Route
-              path="/token/:token"
-              element={isAuth ? <Home /> : <Verify />}
-            />
-            <Route
-              path="/settings"
-              element={isAuth ? <Settings /> : <Login />}
-            />
-          </Routes>
-          <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-          />
-        </BrowserRouter>
-      )}
+      <RouterProvider router={router} />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </>
   );
+};
+
+const App = () => {
+  return <AppContent />;
 };
 
 export default App;
