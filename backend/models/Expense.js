@@ -19,6 +19,12 @@ const schema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        type: {
+            type: String,
+            enum: ["debit", "credit"],
+            default: "debit",
+            required: true,
+        },
         category: {
             type: String,
             enum: [
@@ -29,6 +35,10 @@ const schema = new mongoose.Schema(
                 "Bills & Utilities",
                 "Personal & Transfers",
                 "Miscellaneous",
+
+                "Salary & Income",
+                "Refunds & Returns",
+                "Received from Others",
             ],
             default: "Miscellaneous",
         },
@@ -47,5 +57,6 @@ const schema = new mongoose.Schema(
 
 schema.index({ userId: 1, date: -1 });
 schema.index({ telegramId: 1 });
+schema.index({ userId: 1, type: 1 });
 
 export const Expense = mongoose.model("Expense", schema);

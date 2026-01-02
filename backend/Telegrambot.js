@@ -7,7 +7,6 @@ import { saveExpensesFromTelegram } from './controllers/expense.js';
 import { formatExpenseResponse } from './config/expenseParser.js';
 
 dotenv.config();
-
 mongoose.connect(process.env.MONGO_URI, {
     dbName: "EasyBudgetAI",
 }).then(() => {
@@ -47,12 +46,14 @@ Your Telegram account is already linked to SmartKhata.
 🔗 <b>Linked on:</b> ${existingUser.telegramLinkedAt ? new Date(existingUser.telegramLinkedAt).toLocaleDateString() : 'N/A'}
 
 <b>💡 Quick Commands:</b>
-• Send expenses like: <code>50 chai, 200 auto</code>
+• Send transactions like: <code>50 chai, 200 auto</code>
+• Send income like: <code>5000 salary mila, 500 refund</code>
 • /help - View all commands
-• /today - Today's expenses
+• /today - Today's transactions
 • /summary - Monthly summary
+• /balance - Current month balance
 
-<i>You're all set! Start tracking your expenses.</i>`;
+<i>You're all set! Start tracking your money.</i>`;
 
             await bot.sendMessage(chatId, linkedMessage, { parse_mode: 'HTML' });
         } else {
@@ -138,22 +139,29 @@ bot.onText(/\/help/, async (msg) => {
 
     const helpMessage = `📖 <b>SmartKhata Bot Help</b>
 
-<b>💰 Adding Expenses:</b>
-Simply send your expenses in natural language:
+<b>💰 Adding Transactions:</b>
+Simply send your transactions in natural language:
 
+<u>Expenses (Debit):</u>
 <code>50 chai</code>
 <code>200 auto, 150 lunch</code>
 <code>1000 rent
 300 bijli
 50 recharge</code>
 
+<u>Income (Credit):</u>
+<code>5000 salary mila</code>
+<code>500 refund aya, 200 cashback</code>
+<code>1000 friend se liya</code>
+
 <b>📊 Commands:</b>
 /start - Check account status
 /help - Show this help message
-/today - Today's expenses
+/today - Today's transactions
 /summary - This month's summary
+/balance - Current month balance
 
-<b>📂 Categories (Auto-detected):</b>
+<b>📂 Debit Categories (Expenses):</b>
 🍽️ Food & Dining
 🚗 Travel & Transport
 🛍️ Shopping & Entertainment
@@ -161,6 +169,11 @@ Simply send your expenses in natural language:
 📱 Bills & Utilities
 💸 Personal & Transfers
 📦 Miscellaneous
+
+<b>💚 Credit Categories (Income):</b>
+💼 Salary & Income
+↩️ Refunds & Returns
+🤝 Received from Others
 
 <i>Tip: You can write in Hinglish too!</i>`;
 
@@ -190,20 +203,41 @@ bot.onText(/\/today/, async (msg) => {
         }).sort({ createdAt: -1 });
 
         if (expenses.length === 0) {
-            await bot.sendMessage(chatId, `📅 <b>Today's Expenses</b>\n\nNo expenses recorded today.\n\n<i>Send expenses like: 50 chai, 200 auto</i>`, { parse_mode: 'HTML' });
+            await bot.sendMessage(chatId, `📅 <b>Today's Transactions</b>\n\nNo transactions recorded today.\n\n<i>Send transactions like: 50 chai, 200 auto, 5000 salary mila</i>`, { parse_mode: 'HTML' });
             return;
         }
 
-        const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+        const debits = expenses.filter(e => e.type === "debit");
+        const credits = expenses.filter(e => e.type === "credit");
 
-        let message = `📅 <b>Today's Expenses</b>\n\n`;
+        const totalDebit = debits.reduce((sum, exp) => sum + exp.amount, 0);
+        const totalCredit = credits.reduce((sum, exp) => sum + exp.amount, 0);
 
-        expenses.forEach((exp, index) => {
-            const emoji = getCategoryEmoji(exp.category);
-            message += `${index + 1}. ${emoji} ₹${exp.amount} - ${exp.description}\n`;
-        });
+        let message = `📅 <b>Today's Transactions</b>\n\n`;
 
-        message += `\n💰 <b>Total:</b> ₹${total}`;
+        if (credits.length > 0) {
+            message += `💚 <b>CREDIT (Income):</b>\n`;
+            credits.forEach((exp, index) => {
+                const emoji = getCategoryEmoji(exp.category);
+                message += `${index + 1}. ${emoji} +₹${exp.amount} - ${exp.description}\n`;
+            });
+            message += `\n`;
+        }
+
+        if (debits.length > 0) {
+            message += `❤️ <b>DEBIT (Expenses):</b>\n`;
+            debits.forEach((exp, index) => {
+                const emoji = getCategoryEmoji(exp.category);
+                message += `${index + 1}. ${emoji} -₹${exp.amount} - ${exp.description}\n`;
+            });
+        }
+
+        message += `\n━━━━━━━━━━━━━━━━━\n`;
+        if (totalCredit > 0) message += `💚 <b>Total Credit:</b> +₹${totalCredit}\n`;
+        if (totalDebit > 0) message += `❤️ <b>Total Debit:</b> -₹${totalDebit}\n`;
+        
+        const netBalance = totalCredit - totalDebit;
+        message += `📊 <b>Net Balance:</b> ${netBalance >= 0 ? '+' : ''}₹${netBalance}`;
 
         await bot.sendMessage(chatId, message, { parse_mode: 'HTML' });
     } catch (error) {
@@ -239,38 +273,115 @@ bot.onText(/\/summary/, async (msg) => {
             },
             {
                 $group: {
-                    _id: "$category",
+                    _id: { category: "$category", type: "$type" },
                     total: { $sum: "$amount" },
                     count: { $sum: 1 },
                 },
             },
             {
-                $sort: { total: -1 },
+                $sort: { "_id.type": 1, total: -1 },
             },
         ]);
 
         if (summary.length === 0) {
-            await bot.sendMessage(chatId, `📊 <b>Monthly Summary</b>\n\nNo expenses recorded this month.\n\n<i>Send expenses like: 50 chai, 200 auto</i>`, { parse_mode: 'HTML' });
+            await bot.sendMessage(chatId, `📊 <b>Monthly Summary</b>\n\nNo transactions recorded this month.\n\n<i>Send transactions like: 50 chai, 200 auto, 5000 salary mila</i>`, { parse_mode: 'HTML' });
             return;
         }
 
-        const totalExpense = summary.reduce((sum, cat) => sum + cat.total, 0);
+        const totalDebit = summary
+            .filter(s => s._id.type === "debit")
+            .reduce((sum, cat) => sum + cat.total, 0);
+        
+        const totalCredit = summary
+            .filter(s => s._id.type === "credit")
+            .reduce((sum, cat) => sum + cat.total, 0);
+
         const monthName = new Date().toLocaleString('default', { month: 'long' });
 
         let message = `📊 <b>${monthName} Summary</b>\n\n`;
 
-        summary.forEach((cat) => {
-            const emoji = getCategoryEmoji(cat._id);
-            const percentage = ((cat.total / totalExpense) * 100).toFixed(1);
-            message += `${emoji} <b>${cat._id}</b>\n`;
-            message += `   ₹${cat.total} (${cat.count} items) - ${percentage}%\n\n`;
-        });
+        const credits = summary.filter(s => s._id.type === "credit");
+        if (credits.length > 0) {
+            message += `💚 <b>CREDIT (Income):</b>\n`;
+            credits.forEach((cat) => {
+                const emoji = getCategoryEmoji(cat._id.category);
+                const percentage = totalCredit > 0 ? ((cat.total / totalCredit) * 100).toFixed(1) : 0;
+                message += `${emoji} <b>${cat._id.category}</b>\n`;
+                message += `   ₹${cat.total} (${cat.count} items) - ${percentage}%\n\n`;
+            });
+        }
 
-        message += `💰 <b>Total:</b> ₹${totalExpense}`;
+        const debits = summary.filter(s => s._id.type === "debit");
+        if (debits.length > 0) {
+            message += `❤️ <b>DEBIT (Expenses):</b>\n`;
+            debits.forEach((cat) => {
+                const emoji = getCategoryEmoji(cat._id.category);
+                const percentage = totalDebit > 0 ? ((cat.total / totalDebit) * 100).toFixed(1) : 0;
+                message += `${emoji} <b>${cat._id.category}</b>\n`;
+                message += `   ₹${cat.total} (${cat.count} items) - ${percentage}%\n\n`;
+            });
+        }
+
+        message += `━━━━━━━━━━━━━━━━━\n`;
+        if (totalCredit > 0) message += `💚 <b>Total Credit:</b> +₹${totalCredit}\n`;
+        if (totalDebit > 0) message += `❤️ <b>Total Debit:</b> -₹${totalDebit}\n`;
+        
+        const netBalance = totalCredit - totalDebit;
+        message += `📊 <b>Net Balance:</b> ${netBalance >= 0 ? '+' : ''}₹${netBalance}`;
 
         await bot.sendMessage(chatId, message, { parse_mode: 'HTML' });
     } catch (error) {
         console.error("Error in /summary:", error);
+        await bot.sendMessage(chatId, "❌ Something went wrong. Please try again.");
+    }
+});
+
+bot.onText(/\/balance/, async (msg) => {
+    const chatId = msg.chat.id;
+    const telegramUserId = msg.from.id.toString();
+
+    try {
+        const user = await User.findOne({ telegramUserId });
+
+        if (!user) {
+            await bot.sendMessage(chatId, "❌ Your account is not linked. Use /start to link your account.");
+            return;
+        }
+
+        const { Expense } = await import('./models/Expense.js');
+
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const transactions = await Expense.find({
+            userId: user._id,
+            date: { $gte: startOfMonth },
+        });
+
+        const totalCredit = transactions
+            .filter(t => t.type === "credit")
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        const totalDebit = transactions
+            .filter(t => t.type === "debit")
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        const netBalance = totalCredit - totalDebit;
+        const monthName = new Date().toLocaleString('default', { month: 'long' });
+
+        const message = `💰 <b>${monthName} Balance</b>
+
+💚 <b>Total Income:</b> +₹${totalCredit}
+❤️ <b>Total Expenses:</b> -₹${totalDebit}
+━━━━━━━━━━━━━━━━━
+📊 <b>Net Balance:</b> ${netBalance >= 0 ? '+' : ''}₹${netBalance}
+
+${netBalance >= 0 ? '✅ You are in surplus!' : '⚠️ You are in deficit!'}`;
+
+        await bot.sendMessage(chatId, message, { parse_mode: 'HTML' });
+    } catch (error) {
+        console.error("Error in /balance:", error);
         await bot.sendMessage(chatId, "❌ Something went wrong. Please try again.");
     }
 });
@@ -344,10 +455,12 @@ Your Telegram account has been linked to ${user.email}
 
 <b>💡 You can now:</b>
 • Send expenses like: <code>50 chai, 200 auto</code>
-• Use /today to see today's expenses
+• Send income like: <code>5000 salary mila</code>
+• Use /today to see today's transactions
 • Use /summary for monthly summary
+• Use /balance for current balance
 
-<i>Start tracking your expenses now!</i>`;
+<i>Start tracking your money now!</i>`;
 
             await bot.sendMessage(chatId, successMessage, { parse_mode: 'HTML' });
             return;
@@ -362,7 +475,7 @@ Your Telegram account has been linked to ${user.email}
         const result = await saveExpensesFromTelegram(telegramUserId, text);
 
         if (result.success) {
-            const message = formatExpenseResponse({ expenses: result.expenses });
+            const message = formatExpenseResponse({ transactions: result.transactions });
             await bot.sendMessage(chatId, message, { parse_mode: 'HTML' });
         } else if (result.message) {
             await bot.sendMessage(chatId, `❌ ${result.message}`);
@@ -381,6 +494,9 @@ const getCategoryEmoji = (category) => {
         "Bills & Utilities": "📱",
         "Personal & Transfers": "💸",
         "Miscellaneous": "📦",
+        "Salary & Income": "💼",
+        "Refunds & Returns": "↩️",
+        "Received from Others": "🤝",
     };
     return emojis[category] || "📦";
 };
