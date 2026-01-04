@@ -4,6 +4,7 @@ import connectDb from "./config/db.js";
 import { createClient } from "redis";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import { setupTelegramWebhook } from "./telegramBot.js";
 
 dotenv.config();
 
@@ -22,7 +23,7 @@ export const redisClient = createClient({
 
 redisClient
   .connect()
-  .then(() => console.log("connected to redis"))
+  .then(() => console.log("✅ Connected to Redis"))
   .catch(console.error);
 
 const app = express();
@@ -38,6 +39,11 @@ app.use(
   })
 );
 
+//Health check
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 //importing routes
 import userRoutes from "./routes/user.js";
 import telegramRoutes from "./routes/telegram.js";
@@ -50,6 +56,8 @@ app.use("/api/v1/expense", expenseRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(PORT, async () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
+  
+  await setupTelegramWebhook(app);
 });
