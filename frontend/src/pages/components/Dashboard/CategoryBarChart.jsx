@@ -55,6 +55,7 @@ const CategoryBarChart = ({ chartData, selectedView }) => {
                                 border: '2px solid #E0E0E0',
                                 borderRadius: '12px',
                                 fontSize: '14px',
+                                fontWeight: 'bold',
                                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                 padding: '12px'
                             }}

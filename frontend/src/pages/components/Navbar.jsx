@@ -14,7 +14,7 @@ function Navbar() {
     };
 
     return (
-        <nav className="bg-white fixed top-0 w-full z-50 shadow-sm">
+        <nav className="bg-white fixed top-0 w-full z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-16 py-4">
                 <div className="flex items-center justify-between">
                     <Link to="/" className="flex items-center space-x-2">

@@ -13,6 +13,7 @@ import Verify from "./pages/auth/Verify";
 import Settings from "./pages/Settings";
 import Loading from "./Loding";
 import { fetchUser } from "./redux/slices/authSlice";
+import Dashboard from "./pages/Dashboard";
 
 const AppContent = () => {
   const { isAuth, loading } = useSelector((state) => state.auth);
@@ -51,34 +52,38 @@ const AppContent = () => {
           element: isAuth ? <Home /> : <Navigate to="/login" replace />
         },
         {
-          path: "/settings",
-          element: isAuth ? <Settings /> : <Navigate to="/login" replace />
-        }
-      ]
+          path: "/dashboard",
+          element: isAuth ? <Dashboard /> : <Navigate to="/login" replace />
+        },
+        {
+      path: "/settings",
+      element: isAuth ? <Settings /> : <Navigate to="/login" replace />
+    }
+  ]
     }
   ]);
 
-  if (loading) {
-    return <Loading />;
-  }
+if (loading) {
+  return <Loading />;
+}
 
-  return (
-    <>
-      <RouterProvider router={router} />
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
-    </>
-  );
+return (
+  <>
+    <RouterProvider router={router} />
+    <ToastContainer
+      position="top-right"
+      autoClose={3000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme="light"
+    />
+  </>
+);
 };
 
 const App = () => {
