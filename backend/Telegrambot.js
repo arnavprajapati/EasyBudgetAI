@@ -1,512 +1,563 @@
-import TelegramBot from 'node-telegram-bot-api';
-import dotenv from 'dotenv';
-import mongoose from 'mongoose';
-import { User } from './models/User.js';
-import { TelegramOTP } from './models/TelegramOTP.js';
-import { saveExpensesFromTelegram } from './controllers/expense.js';
-import { formatExpenseResponse } from './config/expenseParser.js';
+import TelegramBot from "node-telegram-bot-api";
+import dotenv from "dotenv";
+import { saveExpensesFromTelegram } from "./controllers/expense.js";
+import { verifyTelegramOTPFromBot } from "./controllers/telegram.js";
+import { formatExpenseResponse } from "./config/expenseParser.js";
 
 dotenv.config();
-mongoose.connect(process.env.MONGO_URI, {
-    dbName: "EasyBudgetAI",
-}).then(() => {
-    console.log("✅ MongoDB connected");
-}).catch((err) => {
-    console.error("❌ MongoDB connection failed:", err);
-    process.exit(1);
-});
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
 if (!BOT_TOKEN) {
-    console.error("❌ TELEGRAM_BOT_TOKEN not found in .env");
+    console.error("❌ TELEGRAM_BOT_TOKEN is missing");
     process.exit(1);
 }
 
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+const bot = new TelegramBot(BOT_TOKEN, { polling: false });
 
-console.log("🤖 Bot is running and listening for messages...");
 
-bot.onText(/\/start/, async (msg) => {
+const handleStart = async (msg) => {
     const chatId = msg.chat.id;
     const telegramUserId = msg.from.id.toString();
-    const telegramUsername = msg.from.username || null;
 
     try {
-        const existingUser = await User.findOne({ telegramUserId });
+        const { User } = await import("./models/User.js");
+        const user = await User.findOne({ telegramUserId });
 
-        if (existingUser) {
-            const linkedMessage = `✅ <b>Account Already Linked</b>
+        if (user) {
+            const linkedMessage = `
+✅ <b>Account Already Linked</b>
 
 Your Telegram account is already linked to SmartKhata.
 
-📧 <b>Email:</b> ${existingUser.email}
-👤 <b>Name:</b> ${existingUser.name}
-📱 <b>Telegram:</b> @${existingUser.telegramUsername || 'N/A'}
-🔗 <b>Linked on:</b> ${existingUser.telegramLinkedAt ? new Date(existingUser.telegramLinkedAt).toLocaleDateString() : 'N/A'}
+📧 <b>Email:</b> ${user.email}
+👤 <b>Name:</b> ${user.name}
+📱 <b>Telegram:</b> @${user.telegramUsername || "N/A"}
+🔗 <b>Linked on:</b> ${user.telegramLinkedAt ? new Date(user.telegramLinkedAt).toLocaleDateString("en-IN") : "N/A"}
 
-<b>💡 Quick Commands:</b>
-• Send transactions like: <code>50 chai, 200 auto</code>
-• Send income like: <code>5000 salary mila, 500 refund</code>
-• /help - View all commands
-• /today - Today's transactions
-• /summary - Monthly summary
-• /balance - Current month balance
+💡 <b>Quick Commands:</b>
+• Send transactions like: <code>50 chai</code>, <code>200 auto</code>
+• Send income like: <code>5000 salary mila</code>, <code>500 refund</code>
+• <code>/help</code> - View all commands
+• <code>/status</code> - Check account status
+• <code>/today</code> - Today's transactions
+• <code>/summary</code> - Monthly summary
+• <code>/balance</code> - Current month balance
 
-<i>You're all set! Start tracking your money.</i>`;
-
-            await bot.sendMessage(chatId, linkedMessage, { parse_mode: 'HTML' });
+<i>You're all set! Start tracking your money.</i>
+`;
+            await bot.sendMessage(chatId, linkedMessage, { parse_mode: "HTML" });
         } else {
-            if (!telegramUsername) {
-                const noUsernameMessage = `❌ <b>No Username Found</b>
+            const welcomeMessage = `
+👋 <b>Welcome to SmartKhata!</b>
 
-Your Telegram account doesn't have a username set. You need a username to link your account.
+🔗 <b>Link Your Account:</b>
+1. Go to the SmartKhata website
+2. Navigate to Settings → Telegram Integration
+3. Generate an OTP
+4. Come back here and send the OTP to link your account
 
-<b>How to set a username:</b>
-1. Go to Telegram Settings
-2. Click on your profile
-3. Set a username (e.g., @arnav_31_06)
-4. Come back and send /start again
+💡 <b>Once linked, you can:</b>
+• Track expenses by simply messaging them
+• Receive instant confirmations
+• View your spending patterns
 
-<i>After setting your username, generate an OTP from the website.</i>`;
+📝 <b>Example messages:</b>
+• "50 chai"
+• "200 uber"
+• "500 grocery shopping"
+• "1000 salary mila" (for income)
 
-                await bot.sendMessage(chatId, noUsernameMessage, { parse_mode: 'HTML' });
-                return;
-            }
-
-            const pendingOTP = await TelegramOTP.findOne({
-                telegramUsername: telegramUsername.toLowerCase(),
-                used: false,
-                expiresAt: { $gt: new Date() },
-            })
-                .sort({ createdAt: -1 })
-                .populate("userId");
-
-            if (pendingOTP) {
-                const expiryTime = new Date(pendingOTP.expiresAt);
-                const now = new Date();
-                const minutesLeft = Math.floor((expiryTime - now) / 60000);
-
-                const otpMessage = `🔐 <b>Your OTP for Account Linking</b>
-
-Your 6-digit OTP code is: <code>${pendingOTP.otp}</code>
-
-📧 This will link your Telegram to: <b>${pendingOTP.userId.email}</b>
-
-⏰ This OTP will expire in <b>${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''}</b>.
-
-<b>📋 Next Steps:</b>
-1. <b>Copy</b> the OTP code above
-2. Go back to the <b>SmartKhata website</b>
-3. <b>Paste</b> the OTP in the verification field
-4. Click <b>"Verify & Link"</b>
-
-<i>Do NOT send the OTP back to me. Enter it on the website!</i>`;
-
-                await bot.sendMessage(chatId, otpMessage, { parse_mode: 'HTML' });
-            } else {
-                const noPendingMessage = `👋 <b>Welcome to SmartKhata Bot!</b>
-
-I couldn't find any pending OTP for your username (@${telegramUsername}).
-
-<b>🔗 How to Link Your Account:</b>
-
-1️⃣ Log in to your SmartKhata account on the website
-2️⃣ Go to <b>Settings → Telegram Integration</b>
-3️⃣ Enter your Telegram username: <code>${telegramUsername}</code>
-4️⃣ Click <b>"Generate OTP"</b>
-5️⃣ Come back here and send <b>/start</b>
-6️⃣ I'll send you the OTP code
-7️⃣ <b>Copy the OTP</b> and paste it on the website
-
-<b>⚠️ Important:</b>
-• Enter your username exactly as: <code>${telegramUsername}</code>
-• You'll paste the OTP on the website, not send it to me
-
-<i>Ready to link? Generate your OTP from the website first!</i>`;
-
-                await bot.sendMessage(chatId, noPendingMessage, { parse_mode: 'HTML' });
-            }
+Need help? Type /help
+`;
+            await bot.sendMessage(chatId, welcomeMessage, { parse_mode: "HTML" });
         }
     } catch (error) {
-        console.error("Error handling /start:", error);
-        await bot.sendMessage(chatId, "❌ Sorry, something went wrong. Please try again later.");
+        console.error("Error in /start handler:", error);
+        const welcomeMessage = `
+👋 <b>Welcome to SmartKhata!</b>
+
+🔗 <b>Link Your Account:</b>
+1. Go to the SmartKhata website
+2. Navigate to Settings → Telegram Integration
+3. Generate an OTP
+4. Come back here and send the OTP to link your account
+
+💡 <b>Once linked, you can:</b>
+• Track expenses by simply messaging them
+• Receive instant confirmations
+• View your spending patterns
+
+📝 <b>Example messages:</b>
+• "50 chai"
+• "200 uber"
+• "500 grocery shopping"
+• "1000 salary mila" (for income)
+
+Need help? Type /help
+`;
+        await bot.sendMessage(chatId, welcomeMessage, { parse_mode: "HTML" });
     }
-});
+};
 
-bot.onText(/\/help/, async (msg) => {
+const handleHelp = async (msg) => {
     const chatId = msg.chat.id;
+    const helpMessage = `
+ℹ️ <b>SmartKhata Bot - Help</b>
 
-    const helpMessage = `📖 <b>SmartKhata Bot Help</b>
+<b>📝 How to Log Expenses:</b>
+Just message your expenses naturally!
 
-<b>💰 Adding Transactions:</b>
-Simply send your transactions in natural language:
+<b>Examples:</b>
+• "100 chai" → ₹100 for tea
+• "500 uber to office" → ₹500 for transport
+• "2000 grocery shopping" → ₹2000 for groceries
+• "50 auto, 200 lunch" → Multiple expenses
 
-<u>Expenses (Debit):</u>
-<code>50 chai</code>
-<code>200 auto, 150 lunch</code>
-<code>1000 rent
-300 bijli
-50 recharge</code>
+<b>💰 Tracking Income:</b>
+• "5000 salary mila" → ₹5000 income
+• "1000 friend se liya" → ₹1000 received
 
-<u>Income (Credit):</u>
-<code>5000 salary mila</code>
-<code>500 refund aya, 200 cashback</code>
-<code>1000 friend se liya</code>
+<b>📊 Categories (Auto-detected):</b>
+• Food & Dining 🍽️
+• Travel & Transport 🚗
+• Shopping & Entertainment 🛍️
+• Housing / Rent 🏠
+• Bills & Utilities 📱
+• Personal & Transfers 💸
+• Salary & Income 💼
+• Refunds & Returns ↩️
 
-<b>📊 Commands:</b>
-/start - Check account status
-/help - Show this help message
-/today - Today's transactions
-/summary - This month's summary
-/balance - Current month balance
+<b>🔧 Commands:</b>
+/start - Get started
+/help - Show this help
+/status - Check link status
 
-<b>📂 Debit Categories (Expenses):</b>
-🍽️ Food & Dining
-🚗 Travel & Transport
-🛍️ Shopping & Entertainment
-🏠 Housing / Rent
-📱 Bills & Utilities
-💸 Personal & Transfers
-📦 Miscellaneous
+<b>🔗 Not Linked Yet?</b>
+Visit SmartKhata website to link your account!
+`;
+    await bot.sendMessage(chatId, helpMessage, { parse_mode: "HTML" });
+};
 
-<b>💚 Credit Categories (Income):</b>
-💼 Salary & Income
-↩️ Refunds & Returns
-🤝 Received from Others
-
-<i>Tip: You can write in Hinglish too!</i>`;
-
-    await bot.sendMessage(chatId, helpMessage, { parse_mode: 'HTML' });
-});
-
-bot.onText(/\/today/, async (msg) => {
+const handleStatus = async (msg) => {
     const chatId = msg.chat.id;
     const telegramUserId = msg.from.id.toString();
 
     try {
+        const { User } = await import("./models/User.js");
         const user = await User.findOne({ telegramUserId });
 
         if (!user) {
-            await bot.sendMessage(chatId, "❌ Your account is not linked. Use /start to link your account.");
+            await bot.sendMessage(
+                chatId,
+                `❌ <b>Not Linked</b>
+
+Your Telegram account is not linked to SmartKhata yet.
+
+<b>To link your account:</b>
+1. Visit SmartKhata website
+2. Go to Settings → Telegram
+3. Generate OTP and send it here
+
+After linking, you can track expenses directly via Telegram!`,
+                { parse_mode: "HTML" }
+            );
+        } else {
+            await bot.sendMessage(
+                chatId,
+                `✅ <b>Account Linked!</b>
+
+📧 <b>Email:</b> ${user.email}
+👤 <b>Name:</b> ${user.name}
+📱 <b>Telegram:</b> @${user.telegramUsername || "N/A"}
+🔗 <b>Linked:</b> ${user.telegramLinkedAt ? new Date(user.telegramLinkedAt).toLocaleDateString("en-IN") : "N/A"}
+
+You can now track expenses by simply sending messages!
+
+<b>Example:</b> "100 chai" or "500 uber"`,
+                { parse_mode: "HTML" }
+            );
+        }
+    } catch (error) {
+        console.error("Error checking status:", error);
+        await bot.sendMessage(chatId, "❌ Something went wrong. Please try again.", { parse_mode: "HTML" });
+    }
+};
+
+const handleOTP = async (msg) => {
+    const chatId = msg.chat.id;
+    const otp = msg.text.trim();
+    const telegramUserId = msg.from.id.toString();
+    const telegramUsername = msg.from.username;
+
+    try {
+        const result = await verifyTelegramOTPFromBot(otp, telegramUserId, telegramUsername);
+        await bot.sendMessage(chatId, result.message, { parse_mode: "HTML" });
+
+        if (result.success) {
+            setTimeout(async () => {
+                await bot.sendMessage(
+                    chatId,
+                    `📝 <b>Start tracking your expenses now!</b>
+
+Just send me messages like:
+• "50 chai"
+• "200 uber"
+• "1000 grocery"
+
+I'll automatically categorize and save them! 🎉`,
+                    { parse_mode: "HTML" }
+                );
+            }, 2000);
+        }
+    } catch (error) {
+        console.error("Error verifying OTP:", error);
+        await bot.sendMessage(chatId, "❌ Something went wrong. Please try again or generate a new OTP.", {
+            parse_mode: "HTML",
+        });
+    }
+};
+
+const handleExpenseMessage = async (msg) => {
+    const chatId = msg.chat.id;
+    const messageText = msg.text;
+    const telegramUserId = msg.from.id.toString();
+
+    if (!messageText || typeof messageText !== "string" || messageText.trim().length === 0) {
+        return;
+    }
+
+    try {
+        const result = await saveExpensesFromTelegram(telegramUserId, messageText);
+
+        if (!result.success) {
+            if (result.message) {
+                await bot.sendMessage(chatId, result.message, { parse_mode: "HTML" });
+            }
             return;
         }
 
-        const { Expense } = await import('./models/Expense.js');
+        const parsedData = { transactions: result.transactions };
+        const responseMessage = formatExpenseResponse(parsedData);
+
+        if (responseMessage) {
+            await bot.sendMessage(chatId, responseMessage, { parse_mode: "HTML" });
+        }
+    } catch (error) {
+        console.error("Error processing message:", error);
+        await bot.sendMessage(chatId, "❌ Something went wrong while processing your expense. Please try again.", {
+            parse_mode: "HTML",
+        });
+    }
+};
+
+const handleToday = async (msg) => {
+    const chatId = msg.chat.id;
+    const telegramUserId = msg.from.id.toString();
+
+    try {
+        const { User } = await import("./models/User.js");
+        const { Expense } = await import("./models/Expense.js");
+
+        const user = await User.findOne({ telegramUserId });
+
+        if (!user) {
+            await bot.sendMessage(chatId, "❌ Your account is not linked. Please use /start to link your account.", {
+                parse_mode: "HTML",
+            });
+            return;
+        }
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
 
-        const expenses = await Expense.find({
+        const transactions = await Expense.find({
             userId: user._id,
-            date: { $gte: today },
+            date: { $gte: today, $lt: tomorrow },
         }).sort({ createdAt: -1 });
 
-        if (expenses.length === 0) {
-            await bot.sendMessage(chatId, `📅 <b>Today's Transactions</b>\n\nNo transactions recorded today.\n\n<i>Send transactions like: 50 chai, 200 auto, 5000 salary mila</i>`, { parse_mode: 'HTML' });
+        if (transactions.length === 0) {
+            await bot.sendMessage(chatId, "📭 <b>No transactions today</b>\n\nStart tracking by sending messages like:\n• <code>50 chai</code>\n• <code>200 uber</code>", {
+                parse_mode: "HTML",
+            });
             return;
         }
 
-        const debits = expenses.filter(e => e.type === "debit");
-        const credits = expenses.filter(e => e.type === "credit");
+        const credits = transactions.filter(t => t.type === "credit");
+        const debits = transactions.filter(t => t.type === "debit");
 
-        const totalDebit = debits.reduce((sum, exp) => sum + exp.amount, 0);
-        const totalCredit = credits.reduce((sum, exp) => sum + exp.amount, 0);
+        const totalCredit = credits.reduce((sum, t) => sum + t.amount, 0);
+        const totalDebit = debits.reduce((sum, t) => sum + t.amount, 0);
+        const netBalance = totalCredit - totalDebit;
 
-        let message = `📅 <b>Today's Transactions</b>\n\n`;
+        let message = `📅 <b>Today's Transactions</b>\n`;
+        message += `<i>${today.toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</i>\n\n`;
 
         if (credits.length > 0) {
-            message += `💚 <b>CREDIT (Income):</b>\n`;
-            credits.forEach((exp, index) => {
-                const emoji = getCategoryEmoji(exp.category);
-                message += `${index + 1}. ${emoji} +₹${exp.amount} - ${exp.description}\n`;
+            message += `💰 <b>INCOME:</b>\n`;
+            credits.forEach((t, i) => {
+                message += `${i + 1}. +₹${t.amount} - ${t.description}\n   <i>${t.category}</i>\n`;
             });
             message += `\n`;
         }
 
         if (debits.length > 0) {
-            message += `❤️ <b>DEBIT (Expenses):</b>\n`;
-            debits.forEach((exp, index) => {
-                const emoji = getCategoryEmoji(exp.category);
-                message += `${index + 1}. ${emoji} -₹${exp.amount} - ${exp.description}\n`;
+            message += `💸 <b>EXPENSES:</b>\n`;
+            debits.forEach((t, i) => {
+                message += `${i + 1}. -₹${t.amount} - ${t.description}\n   <i>${t.category}</i>\n`;
             });
+            message += `\n`;
         }
 
-        message += `\n━━━━━━━━━━━━━━━━━\n`;
-        if (totalCredit > 0) message += `💚 <b>Total Credit:</b> +₹${totalCredit}\n`;
-        if (totalDebit > 0) message += `❤️ <b>Total Debit:</b> -₹${totalDebit}\n`;
-        
-        const netBalance = totalCredit - totalDebit;
-        message += `📊 <b>Net Balance:</b> ${netBalance >= 0 ? '+' : ''}₹${netBalance}`;
+        message += `━━━━━━━━━━━━━━━\n`;
+        if (credits.length > 0) message += `💚 <b>Total Income:</b> +₹${totalCredit}\n`;
+        if (debits.length > 0) message += `❤️ <b>Total Expenses:</b> -₹${totalDebit}\n`;
+        message += `📊 <b>Net:</b> ${netBalance >= 0 ? "+" : ""}₹${netBalance}`;
 
-        await bot.sendMessage(chatId, message, { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, message, { parse_mode: "HTML" });
     } catch (error) {
         console.error("Error in /today:", error);
-        await bot.sendMessage(chatId, "❌ Something went wrong. Please try again.");
+        await bot.sendMessage(chatId, "❌ Error fetching today's transactions. Please try again.", {
+            parse_mode: "HTML",
+        });
     }
-});
+};
 
-bot.onText(/\/summary/, async (msg) => {
+const handleSummary = async (msg) => {
     const chatId = msg.chat.id;
     const telegramUserId = msg.from.id.toString();
 
     try {
+        const { User } = await import("./models/User.js");
+        const { Expense } = await import("./models/Expense.js");
+
         const user = await User.findOne({ telegramUserId });
 
         if (!user) {
-            await bot.sendMessage(chatId, "❌ Your account is not linked. Use /start to link your account.");
+            await bot.sendMessage(chatId, "❌ Your account is not linked. Please use /start to link your account.", {
+                parse_mode: "HTML",
+            });
             return;
         }
 
-        const { Expense } = await import('./models/Expense.js');
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
+        const transactions = await Expense.find({
+            userId: user._id,
+            date: { $gte: startOfMonth, $lte: endOfMonth },
+        });
 
-        const summary = await Expense.aggregate([
-            {
-                $match: {
-                    userId: user._id,
-                    date: { $gte: startOfMonth },
-                },
-            },
-            {
-                $group: {
-                    _id: { category: "$category", type: "$type" },
-                    total: { $sum: "$amount" },
-                    count: { $sum: 1 },
-                },
-            },
-            {
-                $sort: { "_id.type": 1, total: -1 },
-            },
-        ]);
-
-        if (summary.length === 0) {
-            await bot.sendMessage(chatId, `📊 <b>Monthly Summary</b>\n\nNo transactions recorded this month.\n\n<i>Send transactions like: 50 chai, 200 auto, 5000 salary mila</i>`, { parse_mode: 'HTML' });
+        if (transactions.length === 0) {
+            await bot.sendMessage(chatId, "📭 <b>No transactions this month</b>\n\nStart tracking your expenses!", {
+                parse_mode: "HTML",
+            });
             return;
         }
 
-        const totalDebit = summary
-            .filter(s => s._id.type === "debit")
-            .reduce((sum, cat) => sum + cat.total, 0);
-        
-        const totalCredit = summary
-            .filter(s => s._id.type === "credit")
-            .reduce((sum, cat) => sum + cat.total, 0);
+        const credits = transactions.filter(t => t.type === "credit");
+        const debits = transactions.filter(t => t.type === "debit");
 
-        const monthName = new Date().toLocaleString('default', { month: 'long' });
-
-        let message = `📊 <b>${monthName} Summary</b>\n\n`;
-
-        const credits = summary.filter(s => s._id.type === "credit");
-        if (credits.length > 0) {
-            message += `💚 <b>CREDIT (Income):</b>\n`;
-            credits.forEach((cat) => {
-                const emoji = getCategoryEmoji(cat._id.category);
-                const percentage = totalCredit > 0 ? ((cat.total / totalCredit) * 100).toFixed(1) : 0;
-                message += `${emoji} <b>${cat._id.category}</b>\n`;
-                message += `   ₹${cat.total} (${cat.count} items) - ${percentage}%\n\n`;
-            });
-        }
-
-        const debits = summary.filter(s => s._id.type === "debit");
-        if (debits.length > 0) {
-            message += `❤️ <b>DEBIT (Expenses):</b>\n`;
-            debits.forEach((cat) => {
-                const emoji = getCategoryEmoji(cat._id.category);
-                const percentage = totalDebit > 0 ? ((cat.total / totalDebit) * 100).toFixed(1) : 0;
-                message += `${emoji} <b>${cat._id.category}</b>\n`;
-                message += `   ₹${cat.total} (${cat.count} items) - ${percentage}%\n\n`;
-            });
-        }
-
-        message += `━━━━━━━━━━━━━━━━━\n`;
-        if (totalCredit > 0) message += `💚 <b>Total Credit:</b> +₹${totalCredit}\n`;
-        if (totalDebit > 0) message += `❤️ <b>Total Debit:</b> -₹${totalDebit}\n`;
-        
+        const totalCredit = credits.reduce((sum, t) => sum + t.amount, 0);
+        const totalDebit = debits.reduce((sum, t) => sum + t.amount, 0);
         const netBalance = totalCredit - totalDebit;
-        message += `📊 <b>Net Balance:</b> ${netBalance >= 0 ? '+' : ''}₹${netBalance}`;
 
-        await bot.sendMessage(chatId, message, { parse_mode: 'HTML' });
+        const categoryTotals = {};
+        debits.forEach(t => {
+            categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+        });
+
+        const monthName = startOfMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+
+        let message = `📊 <b>Monthly Summary</b>\n`;
+        message += `<i>${monthName}</i>\n\n`;
+
+        message += `💰 <b>Total Income:</b> +₹${totalCredit}\n`;
+        message += `💸 <b>Total Expenses:</b> -₹${totalDebit}\n`;
+        message += `📈 <b>Net Balance:</b> ${netBalance >= 0 ? "+" : ""}₹${netBalance}\n\n`;
+
+        if (Object.keys(categoryTotals).length > 0) {
+            message += `🏷️ <b>Expense Breakdown:</b>\n`;
+            const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
+            sortedCategories.forEach(([category, amount]) => {
+                const percentage = ((amount / totalDebit) * 100).toFixed(1);
+                message += `• ${category}: ₹${amount} (${percentage}%)\n`;
+            });
+            message += `\n`;
+        }
+
+        message += `📝 <b>Total Transactions:</b> ${transactions.length}`;
+
+        await bot.sendMessage(chatId, message, { parse_mode: "HTML" });
     } catch (error) {
         console.error("Error in /summary:", error);
-        await bot.sendMessage(chatId, "❌ Something went wrong. Please try again.");
+        await bot.sendMessage(chatId, "❌ Error fetching summary. Please try again.", {
+            parse_mode: "HTML",
+        });
     }
-});
+};
 
-bot.onText(/\/balance/, async (msg) => {
+const handleBalance = async (msg) => {
     const chatId = msg.chat.id;
     const telegramUserId = msg.from.id.toString();
 
     try {
+        const { User } = await import("./models/User.js");
+        const { Expense } = await import("./models/Expense.js");
+
         const user = await User.findOne({ telegramUserId });
 
         if (!user) {
-            await bot.sendMessage(chatId, "❌ Your account is not linked. Use /start to link your account.");
+            await bot.sendMessage(chatId, "❌ Your account is not linked. Please use /start to link your account.", {
+                parse_mode: "HTML",
+            });
             return;
         }
 
-        const { Expense } = await import('./models/Expense.js');
-
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
         const transactions = await Expense.find({
             userId: user._id,
             date: { $gte: startOfMonth },
         });
 
-        const totalCredit = transactions
-            .filter(t => t.type === "credit")
-            .reduce((sum, t) => sum + t.amount, 0);
-
-        const totalDebit = transactions
-            .filter(t => t.type === "debit")
-            .reduce((sum, t) => sum + t.amount, 0);
-
+        const totalCredit = transactions.filter(t => t.type === "credit").reduce((sum, t) => sum + t.amount, 0);
+        const totalDebit = transactions.filter(t => t.type === "debit").reduce((sum, t) => sum + t.amount, 0);
         const netBalance = totalCredit - totalDebit;
-        const monthName = new Date().toLocaleString('default', { month: 'long' });
 
-        const message = `💰 <b>${monthName} Balance</b>
+        const monthName = now.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 
-💚 <b>Total Income:</b> +₹${totalCredit}
-❤️ <b>Total Expenses:</b> -₹${totalDebit}
-━━━━━━━━━━━━━━━━━
-📊 <b>Net Balance:</b> ${netBalance >= 0 ? '+' : ''}₹${netBalance}
+        let message = `💰 <b>Current Month Balance</b>\n`;
+        message += `<i>${monthName}</i>\n\n`;
+        message += `💚 <b>Income:</b> +₹${totalCredit}\n`;
+        message += `❤️ <b>Expenses:</b> -₹${totalDebit}\n`;
+        message += `━━━━━━━━━━━━━━━\n`;
+        message += `📊 <b>Balance:</b> ${netBalance >= 0 ? "+" : ""}₹${netBalance}`;
 
-${netBalance >= 0 ? '✅ You are in surplus!' : '⚠️ You are in deficit!'}`;
+        if (netBalance < 0) {
+            message += `\n\n⚠️ <i>You're in deficit this month!</i>`;
+        } else if (netBalance > 0) {
+            message += `\n\n✅ <i>Great! You're saving this month!</i>`;
+        }
 
-        await bot.sendMessage(chatId, message, { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, message, { parse_mode: "HTML" });
     } catch (error) {
         console.error("Error in /balance:", error);
-        await bot.sendMessage(chatId, "❌ Something went wrong. Please try again.");
+        await bot.sendMessage(chatId, "❌ Error fetching balance. Please try again.", {
+            parse_mode: "HTML",
+        });
     }
+};
+
+
+bot.on("message", async (msg) => {
+    const messageText = msg.text;
+    if (!messageText) return;
+
+    if (messageText.startsWith("/start")) return handleStart(msg);
+    if (messageText.startsWith("/help")) return handleHelp(msg);
+    if (messageText.startsWith("/status")) return handleStatus(msg);
+    if (messageText.startsWith("/today")) return handleToday(msg);
+    if (messageText.startsWith("/summary")) return handleSummary(msg);
+    if (messageText.startsWith("/balance")) return handleBalance(msg);
+    if (/^\d{6}$/.test(messageText)) return handleOTP(msg);
+
+    return handleExpenseMessage(msg);
 });
 
-bot.on('message', async (msg) => {
-    const chatId = msg.chat.id;
-    const text = msg.text?.trim();
-    const telegramUserId = msg.from.id.toString();
-    const telegramUsername = msg.from.username || null;
 
-    if (!text || text.startsWith('/')) return;
+bot.on("webhook_error", (error) => {
+    console.error("Webhook error:", error);
+});
 
-    const otpRegex = /^\d{6}$/;
-    if (otpRegex.test(text)) {
-        try {
-            const otpRecord = await TelegramOTP.findOne({
-                otp: text,
-                used: true,
-                expiresAt: { $gt: new Date() },
-            }).populate("userId");
 
-            if (!otpRecord) {
-                const invalidMessage = `❌ <b>Invalid or Expired OTP</b>
-
-This OTP is either invalid or has expired.
-
-<b>Please:</b>
-1. Go to the website
-2. Generate a new OTP
-3. Send /start to get it
-4. Paste it on the website (not here!)
-
-<i>Remember: You should paste the OTP on the website, not send it to me!</i>`;
-
-                await bot.sendMessage(chatId, invalidMessage, { parse_mode: 'HTML' });
-                return;
-            }
-
-            if (telegramUsername && telegramUsername.toLowerCase() !== otpRecord.telegramUsername.toLowerCase()) {
-                const mismatchMessage = `❌ <b>Username Mismatch</b>
-
-This OTP was generated for @${otpRecord.telegramUsername}, but you are @${telegramUsername}.
-
-Please generate a new OTP with your correct username.`;
-
-                await bot.sendMessage(chatId, mismatchMessage, { parse_mode: 'HTML' });
-                return;
-            }
-
-            const existingUser = await User.findOne({ telegramUserId });
-            if (existingUser && existingUser._id.toString() !== otpRecord.userId._id.toString()) {
-                await bot.sendMessage(chatId, "❌ This Telegram account is already linked to another user.");
-                return;
-            }
-
-            const user = await User.findById(otpRecord.userId._id);
-            user.telegramUserId = telegramUserId;
-            user.telegramUsername = telegramUsername || otpRecord.telegramUsername;
-            user.telegramLinkedAt = new Date();
-            await user.save();
-
-            await TelegramOTP.deleteOne({ _id: otpRecord._id });
-
-            const successMessage = `✅ <b>Success!</b>
-
-Your Telegram account has been linked to ${user.email}
-
-📧 <b>Email:</b> ${user.email}
-👤 <b>Name:</b> ${user.name}
-📱 <b>Telegram:</b> @${user.telegramUsername}
-
-<b>💡 You can now:</b>
-• Send expenses like: <code>50 chai, 200 auto</code>
-• Send income like: <code>5000 salary mila</code>
-• Use /today to see today's transactions
-• Use /summary for monthly summary
-• Use /balance for current balance
-
-<i>Start tracking your money now!</i>`;
-
-            await bot.sendMessage(chatId, successMessage, { parse_mode: 'HTML' });
-            return;
-        } catch (error) {
-            console.error("Error verifying OTP:", error);
-            await bot.sendMessage(chatId, "❌ Sorry, something went wrong. Please try again.");
-            return;
-        }
+export async function setupTelegramWebhook(app) {
+    if (!WEBHOOK_URL) {
+        console.error("❌ WEBHOOK_URL is missing. Telegram webhook not configured.");
+        console.log("ℹ️  Please set WEBHOOK_URL environment variable");
+        console.log("ℹ️  Example: WEBHOOK_URL=https://yourdomain.com");
+        return;
     }
 
     try {
-        const result = await saveExpensesFromTelegram(telegramUserId, text);
+        const webhookPath = `/api/v1/telegram-webhook`;
+        const fullWebhookUrl = `${WEBHOOK_URL}${webhookPath}`;
 
-        if (result.success) {
-            const message = formatExpenseResponse({ transactions: result.transactions });
-            await bot.sendMessage(chatId, message, { parse_mode: 'HTML' });
-        } else if (result.message) {
-            await bot.sendMessage(chatId, `❌ ${result.message}`);
+        console.log("🔧 Setting up Telegram webhook...");
+        console.log("📍 Target URL:", fullWebhookUrl);
+
+        app.post(webhookPath, (req, res) => {
+            try {
+                bot.processUpdate(req.body);
+                res.sendStatus(200);
+            } catch (error) {
+                console.error("Error processing update:", error);
+                res.sendStatus(500);
+            }
+        });
+        console.log("✅ Express webhook endpoint registered");
+
+        try {
+            const deleteResponse = await fetch(
+                `https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook?drop_pending_updates=true`
+            );
+            const deleteData = await deleteResponse.json();
+
+            if (deleteData.ok) {
+                console.log("🗑️  Old webhook deleted successfully");
+            } else {
+                console.log("ℹ️  No old webhook or error deleting:", deleteData.description);
+            }
+        } catch (deleteError) {
+            console.log("ℹ️  Error deleting old webhook:", deleteError.message);
+        }
+
+        const setResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                url: fullWebhookUrl,
+                drop_pending_updates: true,
+                allowed_updates: ["message", "callback_query"],
+            }),
+        });
+
+        const setData = await setResponse.json();
+
+        if (setData.ok) {
+            console.log("✅ Webhook set successfully!");
+        } else {
+            console.error("❌ Failed to set webhook:", setData.description);
+            return;
+        }
+
+        const infoResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo`);
+        const webhookInfo = await infoResponse.json();
+
+        if (webhookInfo.ok) {
+            const info = webhookInfo.result;
+            console.log("📊 Webhook Status:");
+            console.log("   URL:", info.url);
+            console.log("   Pending updates:", info.pending_update_count);
+            console.log("   Max connections:", info.max_connections);
+
+            if (info.last_error_date) {
+                const errorDate = new Date(info.last_error_date * 1000);
+                console.warn("⚠️  Last error date:", errorDate.toLocaleString());
+                console.warn("⚠️  Last error message:", info.last_error_message);
+            } else {
+                console.log("✅ No webhook errors - bot is ready!");
+            }
         }
     } catch (error) {
-        console.error("Error processing message:", error);
+        console.error("❌ Failed to setup Telegram webhook:", error.message);
+        console.error("Stack:", error.stack);
     }
-});
+}
 
-const getCategoryEmoji = (category) => {
-    const emojis = {
-        "Food & Dining": "🍽️",
-        "Travel & Transport": "🚗",
-        "Shopping & Entertainment": "🛍️",
-        "Housing / Rent": "🏠",
-        "Bills & Utilities": "📱",
-        "Personal & Transfers": "💸",
-        "Miscellaneous": "📦",
-        "Salary & Income": "💼",
-        "Refunds & Returns": "↩️",
-        "Received from Others": "🤝",
-    };
-    return emojis[category] || "📦";
-};
-
-bot.on('polling_error', (error) => {
-    console.error("❌ Polling error:", error.code, error.message);
-});
-
-process.on('SIGINT', () => {
-    bot.stopPolling();
-    mongoose.connection.close();
-    process.exit(0);
-});
+export default bot;
