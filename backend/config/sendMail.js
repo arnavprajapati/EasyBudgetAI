@@ -1,21 +1,27 @@
-import { createTransport } from "nodemailer";
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const sendMail = async ({ email, subject, html }) => {
-  const transport = createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
+  const transport = nodemailer.createTransport({
+    host: "live.smtp.mailtrap.io",
+    port: 2525,            
+    secure: false,
     auth: {
-      user: process.env.SMTP_USER,
+      user: "api",
       pass: process.env.SMTP_PASSWORD,
     },
+    connectionTimeout: 10000, 
   });
 
   await transport.sendMail({
-    from: process.env.SMTP_USER,
+    from: '"SmartKhata" <no-reply@smartkhata.me>',
     to: email,
     subject,
     html,
   });
+
 };
 
 export default sendMail;
