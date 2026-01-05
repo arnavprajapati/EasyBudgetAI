@@ -282,14 +282,12 @@ export const refreshToken = TryCatch(async (req, res) => {
   const decode = await verifyRefreshToken(refreshToken);
 
   if (!decode) {
-    // Clear cookies with proper domain for production
+    // Clear cookies for cross-origin
     const clearOptions = {
       path: "/",
+      secure: true,
+      sameSite: "none",
     };
-
-    if (process.env.NODE_ENV === "production") {
-      clearOptions.domain = ".smartkhata.me";
-    }
 
     res.clearCookie("refreshToken", clearOptions);
     res.clearCookie("accessToken", clearOptions);
@@ -312,14 +310,12 @@ export const logutUser = TryCatch(async (req, res) => {
 
   await revokeRefershToken(userId);
 
-  // Clear cookies with proper domain for production
+  // Clear cookies for cross-origin
   const clearOptions = {
     path: "/",
+    secure: true,
+    sameSite: "none",
   };
-
-  if (process.env.NODE_ENV === "production") {
-    clearOptions.domain = ".smartkhata.me";
-  }
 
   res.clearCookie("refreshToken", clearOptions);
   res.clearCookie("accessToken", clearOptions);

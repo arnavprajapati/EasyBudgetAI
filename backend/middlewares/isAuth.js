@@ -32,14 +32,12 @@ export const isAuth = async (req, res, next) => {
     console.log('🔄 Session Active:', sessionActive);
 
     if (!sessionActive) {
-      // Clear cookies with proper domain for production
+      // Clear cookies for cross-origin
       const clearOptions = {
         path: "/",
+        secure: true,
+        sameSite: "none",
       };
-
-      if (process.env.NODE_ENV === "production") {
-        clearOptions.domain = ".smartkhata.me";
-      }
 
       res.clearCookie("refreshToken", clearOptions);
       res.clearCookie("accessToken", clearOptions);

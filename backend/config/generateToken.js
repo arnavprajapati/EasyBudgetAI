@@ -156,16 +156,11 @@ export const generateAccessToken = (id, sessionId, res) => {
 
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     path: "/",
     maxAge: 15 * 60 * 1000,
   };
-
-  // Add domain with dot prefix for subdomain support (www.smartkhata.me)
-  if (process.env.NODE_ENV === "production") {
-    cookieOptions.domain = ".smartkhata.me";
-  }
 
   res.cookie("accessToken", accessToken, cookieOptions);
 
@@ -196,16 +191,11 @@ export const generateToken = async (id, res) => {
 
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
-
-  // Add domain with dot prefix for subdomain support (www.smartkhata.me)
-  if (process.env.NODE_ENV === "production") {
-    cookieOptions.domain = ".smartkhata.me";
-  }
 
   res.cookie("refreshToken", refreshToken, cookieOptions);
 
