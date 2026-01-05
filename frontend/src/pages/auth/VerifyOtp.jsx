@@ -5,6 +5,7 @@ import axios from "axios";
 import { server } from "../../main";
 import { toast } from "react-toastify";
 import { setAuth, setUser } from "../../redux/slices/authSlice";
+import { setCSRFToken } from "../../apiIntercepter";
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState("");
@@ -24,6 +25,11 @@ const VerifyOtp = () => {
         { withCredentials: true }
       );
 
+      // Store CSRF token from response (cross-origin can't read cookies)
+      if (data.sessionInfo?.csrfToken) {
+        setCSRFToken(data.sessionInfo.csrfToken);
+      }
+
       toast.success(data.message);
       dispatch(setAuth(true));
       dispatch(setUser(data.user));
@@ -40,11 +46,11 @@ const VerifyOtp = () => {
     <div className="min-h-screen fixed inset-0 z-50 flex items-center justify-center bg-opacity-70 backdrop-blur-md p-4 transition-opacity duration-300">
       <div className="max-w-sm w-full">
         <div className="bg-white rounded-xl shadow-2xl p-8">
-          
+
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
             Verify OTP
           </h2>
-          
+
           <p className="text-gray-600 font-bold text-center mb-6">
             Enter the code sent to your email
           </p>
@@ -74,8 +80,8 @@ const VerifyOtp = () => {
           </form>
 
           <div className="mt-4 text-center text-sm">
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               className="text-gray-600 cursor-pointer hover:text-[#387ED1] font-semibold"
             >
               Back to Login

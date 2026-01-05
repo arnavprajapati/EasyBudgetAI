@@ -20,7 +20,7 @@ api.interceptors.request.use(
       config.method === "put" ||
       config.method === "delete"
     ) {
-      const csrfToken = getCookie("csrfToken");
+      const csrfToken = getCSRFToken();
 
       if (csrfToken) {
         config.headers["x-csrf-token"] = csrfToken;
@@ -37,6 +37,7 @@ let isRefreshing = false;
 let isRefreshingCSRFToken = false;
 let failedQueue = [];
 let csrfFailedQueue = [];
+let currentCsrfToken = null; // Store CSRF token in memory
 
 const processQueue = (error, token = null) => {
   failedQueue.forEach((prom) => {
@@ -60,6 +61,16 @@ const processCSRFQueue = (error, token = null) => {
   csrfFailedQueue = [];
 };
 
+// Helper to get CSRF token (from memory first, then cookie)
+const getCSRFToken = () => {
+  return currentCsrfToken || getCookie("csrfToken");
+};
+
+// Export function to set CSRF token after login
+export const setCSRFToken = (token) => {
+  currentCsrfToken = token;
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -73,9 +84,9 @@ api.interceptors.response.use(
           return new Promise((resolve, reject) => {
             csrfFailedQueue.push({ resolve, reject });
           }).then(() => {
-            const newCsrfToken = getCookie("csrfToken");
-            if (newCsrfToken) {
-              originalRequest.headers["x-csrf-token"] = newCsrfToken;
+            // Use stored CSRF token
+            if (currentCsrfToken) {
+              originalRequest.headers["x-csrf-token"] = currentCsrfToken;
             }
             return api(originalRequest);
           });
@@ -84,16 +95,17 @@ api.interceptors.response.use(
         isRefreshingCSRFToken = true;
 
         try {
-          await api.post("/api/v1/refresh-csrf");
+          const response = await api.post("/api/v1/refresh-csrf");
+          // Store CSRF token from response body (cross-origin can't read cookies)
+          currentCsrfToken = response.data.csrfToken;
           processCSRFQueue(null);
-          const newCsrfToken = getCookie("csrfToken");
-          if (newCsrfToken) {
-            originalRequest.headers["x-csrf-token"] = newCsrfToken;
+          if (currentCsrfToken) {
+            originalRequest.headers["x-csrf-token"] = currentCsrfToken;
           }
           return api(originalRequest);
         } catch (error) {
           processCSRFQueue(error);
-          console.error("Failed to refesh csrf token", error);
+          console.error("Failed to refresh csrf token", error);
           return Promise.reject(error);
         } finally {
           isRefreshingCSRFToken = false;
