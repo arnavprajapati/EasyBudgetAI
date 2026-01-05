@@ -157,12 +157,11 @@ export const generateAccessToken = (id, sessionId, res) => {
   const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    sameSite: "lax",
     path: "/",
     maxAge: 15 * 60 * 1000,
   };
 
-  // Add domain for production
   if (process.env.NODE_ENV === "production") {
     cookieOptions.domain = "smartkhata.me";
   }
@@ -197,12 +196,11 @@ export const generateToken = async (id, res) => {
   const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    sameSite: "lax",
     path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 
-  // Add domain for production
   if (process.env.NODE_ENV === "production") {
     cookieOptions.domain = "smartkhata.me";
   }
