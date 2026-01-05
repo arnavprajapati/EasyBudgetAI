@@ -56,6 +56,7 @@ app.use(cors({
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "x-csrf-token", "Authorization"],
+  exposedHeaders: ["set-cookie"], 
 }));
 
 app.get("/health", (req, res) => {
@@ -66,6 +67,7 @@ app.use((req, res, next) => {
   console.log('📥 Request:', req.method, req.path);
   console.log('🍪 Cookies:', req.cookies);
   console.log('🌍 Origin:', req.headers.origin);
+  console.log('📋 Headers:', req.headers.cookie);
   next();
 });
 

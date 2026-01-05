@@ -2,6 +2,9 @@ import jwt from "jsonwebtoken";
 import { redisClient } from "../index.js";
 import { generateCSRFToken, revokeCSRFTOKEN } from "./csrfMiddleware.js";
 import crypto from "crypto";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export const generateToken = async (id, res) => {
   const sessionId = crypto.randomBytes(16).toString("hex");
