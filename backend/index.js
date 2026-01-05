@@ -33,24 +33,30 @@ app.use(cookieParser());
 
 const allowedOrigins = [
   "https://www.smartkhata.me",
-  "http://localhost:5173"
+  "https://smartkhata.me", 
+  "http://localhost:5173",
+  "http://localhost:5000"
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-        return callback(new Error(msg), false);
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) {
+      if (process.env.NODE_ENV === "production") {
+        return callback(new Error('Origin required in production'), false);
       }
       return callback(null, true);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  })
-);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'), false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "x-csrf-token", "Authorization"],
+}));
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -67,7 +73,7 @@ app.use("/api/v1/expense", expenseRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, async () => {
-  console.log(`🚀 Server is running on port ${ PORT }`);
+  console.log(`🚀 Server is running on port ${PORT}`);
 
   await setupTelegramWebhook(app);
 });

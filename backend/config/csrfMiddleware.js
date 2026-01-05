@@ -3,15 +3,16 @@ import { redisClient } from "../index.js";
 
 export const generateCSRFToken = async (userId, res) => {
   const csrfToken = crypto.randomBytes(32).toString("hex");
-
   const csrfKey = `csrf:${userId}`;
 
   await redisClient.setEx(csrfKey, 3600, csrfToken);
 
   res.cookie("csrfToken", csrfToken, {
     httpOnly: false,
-    secure: true,
-    sameSite: "none",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    domain: process.env.NODE_ENV === "production" ? ".smartkhata.me" : undefined,
+    path: "/",
     maxAge: 60 * 60 * 1000,
   });
 

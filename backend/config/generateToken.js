@@ -40,18 +40,22 @@ export const generateToken = async (id, res) => {
 
   await redisClient.setEx(activeSessionKey, 7 * 24 * 60 * 60, sessionId);
 
-  res.cookie("accessToken", accessToken, {
+  const cookieOptions = {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 15 * 60 * 1000,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    domain: process.env.NODE_ENV === "production" ? ".smartkhata.me" : undefined,
+    path: "/",
+  };
+
+  res.cookie("accessToken", accessToken, {
+    ...cookieOptions,
+    maxAge: 15 * 60 * 1000, 
   });
 
   res.cookie("refreshToken", refreshToken, {
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-    sameSite: "none",
-    secure: true,
+    ...cookieOptions,
+    maxAge: 7 * 24 * 60 * 60 * 1000, 
   });
 
   const csrfToken = await generateCSRFToken(id, res);
