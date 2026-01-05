@@ -72,7 +72,13 @@ api.interceptors.response.use(
         if (isRefreshingCSRFToken) {
           return new Promise((resolve, reject) => {
             csrfFailedQueue.push({ resolve, reject });
-          }).then(() => api(originalRequest));
+          }).then(() => {
+            const newCsrfToken = getCookie("csrfToken");
+            if (newCsrfToken) {
+              originalRequest.headers["x-csrf-token"] = newCsrfToken;
+            }
+            return api(originalRequest);
+          });
         }
         originalRequest._retry = true;
         isRefreshingCSRFToken = true;
@@ -80,6 +86,10 @@ api.interceptors.response.use(
         try {
           await api.post("/api/v1/refresh-csrf");
           processCSRFQueue(null);
+          const newCsrfToken = getCookie("csrfToken");
+          if (newCsrfToken) {
+            originalRequest.headers["x-csrf-token"] = newCsrfToken;
+          }
           return api(originalRequest);
         } catch (error) {
           processCSRFQueue(error);
