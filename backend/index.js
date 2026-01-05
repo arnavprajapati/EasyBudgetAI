@@ -62,6 +62,14 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+app.use((req, res, next) => {
+  console.log('📥 Request:', req.method, req.path);
+  console.log('🍪 Cookies:', req.cookies);
+  console.log('🌍 Origin:', req.headers.origin);
+  next();
+});
+
+
 import userRoutes from "./routes/user.js";
 import telegramRoutes from "./routes/telegram.js";
 import expenseRoutes from "./routes/expense.js";
