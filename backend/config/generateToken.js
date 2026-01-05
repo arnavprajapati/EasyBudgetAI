@@ -132,19 +132,19 @@ export const revokeRefershToken = async (userId) => {
 export const isSessionActive = async (userId, sessionId) => {
   const sessionKey = `session:${sessionId}`;
   const sessionData = await redisClient.get(sessionKey);
-  
+
   console.log('🔍 Checking Session:', sessionId);
   console.log('📦 Session Data:', sessionData ? 'Found' : 'Not Found');
-  
+
   if (!sessionData) {
     return false;
   }
 
   const session = JSON.parse(sessionData);
-  
+
   session.lastActivity = new Date().toISOString();
   await redisClient.setEx(sessionKey, 7 * 24 * 60 * 60, JSON.stringify(session));
-  
+
   return session.userId === userId;
 };
 
@@ -154,13 +154,20 @@ export const generateAccessToken = (id, sessionId, res) => {
     expiresIn: "15m",
   });
 
-  res.cookie("accessToken", accessToken, {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
     maxAge: 15 * 60 * 1000,
-  });
+  };
+
+  // Add domain for production
+  if (process.env.NODE_ENV === "production") {
+    cookieOptions.domain = "smartkhata.me";
+  }
+
+  res.cookie("accessToken", accessToken, cookieOptions);
 
   return accessToken;
 };
@@ -187,13 +194,20 @@ export const generateToken = async (id, res) => {
     JSON.stringify(sessionData)
   );
 
-  res.cookie("refreshToken", refreshToken, {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  };
+
+  // Add domain for production
+  if (process.env.NODE_ENV === "production") {
+    cookieOptions.domain = "smartkhata.me";
+  }
+
+  res.cookie("refreshToken", refreshToken, cookieOptions);
 
   generateAccessToken(id, sessionId, res);
 

@@ -10,13 +10,19 @@ export const generateCSRFToken = async (userId, res) => {
 
   await redisClient.setEx(csrfKey, 3600, csrfToken);
 
-  res.cookie("csrfToken", csrfToken, {
+  const cookieOptions = {
     httpOnly: false,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
     maxAge: 60 * 60 * 1000,
-  });
+  };
+
+  if (process.env.NODE_ENV === "production") {
+    cookieOptions.domain = "smartkhata.me";
+  }
+
+  res.cookie("csrfToken", csrfToken, cookieOptions);
 
   return csrfToken;
 };
