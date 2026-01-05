@@ -130,8 +130,22 @@ export const revokeRefershToken = async (userId) => {
 };
 
 export const isSessionActive = async (userId, sessionId) => {
-  const activeSessionId = await redisClient.get(`active_session:${userId}`);
-  return activeSessionId === sessionId;
+  const sessionKey = `session:${sessionId}`;
+  const sessionData = await redisClient.get(sessionKey);
+  
+  console.log('🔍 Checking Session:', sessionId);
+  console.log('📦 Session Data:', sessionData ? 'Found' : 'Not Found');
+  
+  if (!sessionData) {
+    return false;
+  }
+
+  const session = JSON.parse(sessionData);
+  
+  session.lastActivity = new Date().toISOString();
+  await redisClient.setEx(sessionKey, 7 * 24 * 60 * 60, JSON.stringify(session));
+  
+  return session.userId === userId;
 };
 
 

@@ -7,6 +7,8 @@ export const isAuth = async (req, res, next) => {
   try {
     const token = req.cookies.accessToken;
 
+    console.log('🔑 Access Token:', token ? 'Present' : 'Missing');
+
     if (!token) {
       return res.status(403).json({
         message: "Please Login - no token",
@@ -14,6 +16,7 @@ export const isAuth = async (req, res, next) => {
     }
 
     const decodedData = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('✅ Decoded Token:', decodedData);
 
     if (!decodedData) {
       return res.status(400).json({
@@ -25,6 +28,8 @@ export const isAuth = async (req, res, next) => {
       decodedData.id,
       decodedData.sessionId
     );
+
+    console.log('🔄 Session Active:', sessionActive);
 
     if (!sessionActive) {
       res.clearCookie("refreshToken");
@@ -46,6 +51,8 @@ export const isAuth = async (req, res, next) => {
 
     const user = await User.findById(decodedData.id).select("-password");
 
+    console.log('👤 User Found:', user ? user.email : 'Not Found');
+
     if (!user) {
       return res.status(400).json({
         message: "no user with this id",
@@ -58,6 +65,7 @@ export const isAuth = async (req, res, next) => {
     req.sessionId = decodedData.sessionId;
     next();
   } catch (error) {
+    console.error('❌ Auth Error:', error.message);
     res.status(500).json({
       message: error.message,
     });
