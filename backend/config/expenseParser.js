@@ -232,12 +232,16 @@ const fallbackParser = (messageText) => {
 };
 
 export const formatExpenseResponse = (parsedData) => {
-    if (!parsedData.transactions || parsedData.transactions.length === 0) {
+    const transactions = Array.isArray(parsedData) 
+        ? parsedData 
+        : parsedData?.transactions || [];
+    
+    if (!transactions || transactions.length === 0) {
         return null;
     }
 
-    const debits = parsedData.transactions.filter(t => t.type === "debit");
-    const credits = parsedData.transactions.filter(t => t.type === "credit");
+    const debits = transactions.filter(t => t.type === "debit");
+    const credits = transactions.filter(t => t.type === "credit");
 
     const totalDebit = debits.reduce((sum, exp) => sum + exp.amount, 0);
     const totalCredit = credits.reduce((sum, exp) => sum + exp.amount, 0);
