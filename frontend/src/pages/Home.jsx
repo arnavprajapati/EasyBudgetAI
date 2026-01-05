@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../redux/slices/authSlice";
-import { LogOut, User as UserIcon } from "lucide-react"; // Added icons
+import { LogOut, User as UserIcon, LayoutDashboard } from "lucide-react";
 
 const Home = () => {
   const { user } = useSelector((state) => state.auth);
@@ -31,10 +31,14 @@ const Home = () => {
           </p>
           
           <div className="space-y-4">
-            <p className="text-gray-500 text-sm font-black">
-              You are successfully logged into your account.
-            </p>
-            
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-[#387ED1] text-white font-bold rounded-lg hover:bg-[#2d66a8] transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer"
+            >
+              <LayoutDashboard size={20} />
+              Go to Dashboard
+            </button>
+
             <button
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 font-semibold rounded-lg hover:bg-red-100 transition-colors duration-200 cursor-pointer border border-red-100"
@@ -46,7 +50,7 @@ const Home = () => {
         </div>
 
         <div className="bg-gray-50 py-4 px-8 text-center border-t border-gray-100">
-          <p className="text-xs text-gray-400 font-bold">
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
             Account Security: Active
           </p>
         </div>

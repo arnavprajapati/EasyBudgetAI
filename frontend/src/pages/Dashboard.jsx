@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import api from '../apiIntercepter';
 import { toast } from 'react-toastify';
 
-// Import components
 import ViewTabs from './components/Dashboard/ViewTabs';
 import CategoryBarChart from './components/Dashboard/CategoryBarChart';
 import CategoryPieChart from './components/Dashboard/CategoryPieChart';
