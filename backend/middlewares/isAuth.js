@@ -32,9 +32,18 @@ export const isAuth = async (req, res, next) => {
     console.log('🔄 Session Active:', sessionActive);
 
     if (!sessionActive) {
-      res.clearCookie("refreshToken");
-      res.clearCookie("accessToken");
-      res.clearCookie("csrfToken");
+      // Clear cookies with proper domain for production
+      const clearOptions = {
+        path: "/",
+      };
+
+      if (process.env.NODE_ENV === "production") {
+        clearOptions.domain = ".smartkhata.me";
+      }
+
+      res.clearCookie("refreshToken", clearOptions);
+      res.clearCookie("accessToken", clearOptions);
+      res.clearCookie("csrfToken", clearOptions);
 
       return res.status(401).json({
         message: "Session Expired. You have been logged in from another device",

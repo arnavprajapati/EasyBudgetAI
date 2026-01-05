@@ -282,9 +282,18 @@ export const refreshToken = TryCatch(async (req, res) => {
   const decode = await verifyRefreshToken(refreshToken);
 
   if (!decode) {
-    res.clearCookie("refreshToken");
-    res.clearCookie("accessToken");
-    res.clearCookie("csrfToken");
+    // Clear cookies with proper domain for production
+    const clearOptions = {
+      path: "/",
+    };
+
+    if (process.env.NODE_ENV === "production") {
+      clearOptions.domain = ".smartkhata.me";
+    }
+
+    res.clearCookie("refreshToken", clearOptions);
+    res.clearCookie("accessToken", clearOptions);
+    res.clearCookie("csrfToken", clearOptions);
 
     return res.status(401).json({
       message: "Session Expired. Please login",
@@ -303,9 +312,18 @@ export const logutUser = TryCatch(async (req, res) => {
 
   await revokeRefershToken(userId);
 
-  res.clearCookie("refreshToken");
-  res.clearCookie("accessToken");
-  res.clearCookie("csrfToken");
+  // Clear cookies with proper domain for production
+  const clearOptions = {
+    path: "/",
+  };
+
+  if (process.env.NODE_ENV === "production") {
+    clearOptions.domain = ".smartkhata.me";
+  }
+
+  res.clearCookie("refreshToken", clearOptions);
+  res.clearCookie("accessToken", clearOptions);
+  res.clearCookie("csrfToken", clearOptions);
 
   await redisClient.del(`user:${userId}`);
 

@@ -18,8 +18,9 @@ export const generateCSRFToken = async (userId, res) => {
     maxAge: 60 * 60 * 1000,
   };
 
+  // Add domain with dot prefix for subdomain support (www.smartkhata.me)
   if (process.env.NODE_ENV === "production") {
-    cookieOptions.domain = "smartkhata.me";
+    cookieOptions.domain = ".smartkhata.me";
   }
 
   res.cookie("csrfToken", csrfToken, cookieOptions);
