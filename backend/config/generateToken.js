@@ -6,65 +6,65 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export const generateToken = async (id, res) => {
-  const sessionId = crypto.randomBytes(16).toString("hex");
+// export const generateToken = async (id, res) => {
+//   const sessionId = crypto.randomBytes(16).toString("hex");
 
-  const accessToken = jwt.sign({ id, sessionId }, process.env.JWT_SECRET, {
-    expiresIn: "15m",
-  });
+//   const accessToken = jwt.sign({ id, sessionId }, process.env.JWT_SECRET, {
+//     expiresIn: "15m",
+//   });
 
-  const refreshToken = jwt.sign({ id, sessionId }, process.env.REFRESH_SECRET, {
-    expiresIn: "7d",
-  });
+//   const refreshToken = jwt.sign({ id, sessionId }, process.env.REFRESH_SECRET, {
+//     expiresIn: "7d",
+//   });
 
-  const refreshTokenKey = `refresh_token:${id}`;
-  const activeSessionKey = `active_session:${id}`;
-  const sessionDataKey = `session:${sessionId}`;
+//   const refreshTokenKey = `refresh_token:${id}`;
+//   const activeSessionKey = `active_session:${id}`;
+//   const sessionDataKey = `session:${sessionId}`;
 
-  const existingSession = await redisClient.get(activeSessionKey);
-  if (existingSession) {
-    await redisClient.del(`session:${existingSession}`);
-    await redisClient.del(refreshToken);
-  }
+//   const existingSession = await redisClient.get(activeSessionKey);
+//   if (existingSession) {
+//     await redisClient.del(`session:${existingSession}`);
+//     await redisClient.del(refreshToken);
+//   }
 
-  const sessionData = {
-    userId: id,
-    sessionId,
-    createdAt: new Date().toISOString(),
-    lastActivity: new Date().toISOString(),
-  };
+//   const sessionData = {
+//     userId: id,
+//     sessionId,
+//     createdAt: new Date().toISOString(),
+//     lastActivity: new Date().toISOString(),
+//   };
 
-  await redisClient.setEx(refreshTokenKey, 7 * 24 * 60 * 60, refreshToken);
-  await redisClient.setEx(
-    sessionDataKey,
-    7 * 24 * 60 * 60,
-    JSON.stringify(sessionData)
-  );
+//   await redisClient.setEx(refreshTokenKey, 7 * 24 * 60 * 60, refreshToken);
+//   await redisClient.setEx(
+//     sessionDataKey,
+//     7 * 24 * 60 * 60,
+//     JSON.stringify(sessionData)
+//   );
 
-  await redisClient.setEx(activeSessionKey, 7 * 24 * 60 * 60, sessionId);
+//   await redisClient.setEx(activeSessionKey, 7 * 24 * 60 * 60, sessionId);
 
-  const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    domain: process.env.NODE_ENV === "production" ? ".smartkhata.me" : undefined,
-    path: "/",
-  };
+//   const cookieOptions = {
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === "production",
+//     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+//     domain: process.env.NODE_ENV === "production" ? ".smartkhata.me" : undefined,
+//     path: "/",
+//   };
 
-  res.cookie("accessToken", accessToken, {
-    ...cookieOptions,
-    maxAge: 15 * 60 * 1000, 
-  });
+//   res.cookie("accessToken", accessToken, {
+//     ...cookieOptions,
+//     maxAge: 15 * 60 * 1000, 
+//   });
 
-  res.cookie("refreshToken", refreshToken, {
-    ...cookieOptions,
-    maxAge: 7 * 24 * 60 * 60 * 1000, 
-  });
+//   res.cookie("refreshToken", refreshToken, {
+//     ...cookieOptions,
+//     maxAge: 7 * 24 * 60 * 60 * 1000, 
+//   });
 
-  const csrfToken = await generateCSRFToken(id, res);
+//   const csrfToken = await generateCSRFToken(id, res);
 
-  return { accessToken, refreshToken, csrfToken, sessionId };
-};
+//   return { accessToken, refreshToken, csrfToken, sessionId };
+// };
 
 export const verifyRefreshToken = async (refreshToken) => {
   try {
@@ -105,18 +105,18 @@ export const verifyRefreshToken = async (refreshToken) => {
   }
 };
 
-export const generateAccessToken = (id, sessionId, res) => {
-  const accessToken = jwt.sign({ id, sessionId }, process.env.JWT_SECRET, {
-    expiresIn: "15m",
-  });
+// export const generateAccessToken = (id, sessionId, res) => {
+//   const accessToken = jwt.sign({ id, sessionId }, process.env.JWT_SECRET, {
+//     expiresIn: "15m",
+//   });
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 15 * 60 * 1000,
-  });
-};
+//   res.cookie("accessToken", accessToken, {
+//     httpOnly: true,
+//     secure: true,
+//     sameSite: "none",
+//     maxAge: 15 * 60 * 1000,
+//   });
+// };
 
 export const revokeRefershToken = async (userId) => {
   const activeSessionId = await redisClient.get(`active_session:${userId}`);
@@ -132,4 +132,58 @@ export const revokeRefershToken = async (userId) => {
 export const isSessionActive = async (userId, sessionId) => {
   const activeSessionId = await redisClient.get(`active_session:${userId}`);
   return activeSessionId === sessionId;
+};
+
+
+export const generateAccessToken = (id, sessionId, res) => {
+  const accessToken = jwt.sign({ id, sessionId }, process.env.JWT_SECRET, {
+    expiresIn: "15m",
+  });
+
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+    maxAge: 15 * 60 * 1000,
+  });
+
+  return accessToken;
+};
+
+export const generateToken = async (id, res) => {
+  const sessionId = crypto.randomBytes(16).toString("hex");
+
+  const refreshToken = jwt.sign(
+    { id, sessionId },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  const sessionData = {
+    userId: id,
+    sessionId,
+    createdAt: new Date().toISOString(),
+    lastActivity: new Date().toISOString(),
+  };
+
+  await redisClient.setEx(
+    `session:${sessionId}`,
+    7 * 24 * 60 * 60,
+    JSON.stringify(sessionData)
+  );
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  generateAccessToken(id, sessionId, res);
+
+  const csrfToken = await generateCSRFToken(id, res);
+
+  return { sessionId, csrfToken };
 };

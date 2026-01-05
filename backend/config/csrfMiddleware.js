@@ -14,7 +14,6 @@ export const generateCSRFToken = async (userId, res) => {
     httpOnly: false,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    domain: process.env.NODE_ENV === "production" ? ".smartkhata.me" : undefined,
     path: "/",
     maxAge: 60 * 60 * 1000,
   });
