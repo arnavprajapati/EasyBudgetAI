@@ -10,6 +10,8 @@ import Login from "./pages/auth/Login";
 import VerifyOtp from "./pages/auth/VerifyOtp";
 import Register from "./pages/auth/Register";
 import Verify from "./pages/auth/Verify";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import Settings from "./pages/Settings";
 import Loading from "./Loding";
 import { fetchUser } from "./redux/slices/authSlice";
@@ -41,6 +43,14 @@ const AppContent = () => {
       element: !isAuth ? <Verify /> : <Navigate to="/" replace />
     },
     {
+      path: "/forgot-password",
+      element: !isAuth ? <ForgotPassword /> : <Navigate to="/" replace />
+    },
+    {
+      path: "/reset-password/:token",
+      element: !isAuth ? <ResetPassword /> : <Navigate to="/" replace />
+    },
+    {
       element: <AppLayout />,
       children: [
         {
@@ -56,34 +66,34 @@ const AppContent = () => {
           element: isAuth ? <Dashboard /> : <Navigate to="/login" replace />
         },
         {
-      path: "/settings",
-      element: isAuth ? <Settings /> : <Navigate to="/login" replace />
-    }
-  ]
+          path: "/settings",
+          element: isAuth ? <Settings /> : <Navigate to="/login" replace />
+        }
+      ]
     }
   ]);
 
-if (loading) {
-  return <Loading />;
-}
+  if (loading) {
+    return <Loading />;
+  }
 
-return (
-  <>
-    <RouterProvider router={router} />
-    <ToastContainer
-      position="top-right"
-      autoClose={3000}
-      hideProgressBar={false}
-      newestOnTop={false}
-      closeOnClick
-      rtl={false}
-      pauseOnFocusLoss
-      draggable
-      pauseOnHover
-      theme="light"
-    />
-  </>
-);
+  return (
+    <>
+      <RouterProvider router={router} />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+    </>
+  );
 };
 
 const App = () => {

@@ -1,4 +1,4 @@
-import { loginSchema, registerSchema } from "../config/zod.js";
+import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from "../config/zod.js";
 import { redisClient } from "../index.js";
 import TryCatch from "../middlewares/TryCatch.js";
 import sanitize from "mongo-sanitize";
@@ -6,7 +6,7 @@ import { User } from "../models/User.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import sendMail from "../config/sendMail.js";
-import { getOtpHtml, getVerifyEmailHtml } from "../config/html.js";
+import { getOtpHtml, getVerifyEmailHtml, getResetPasswordHtml } from "../config/html.js";
 import {
   generateAccessToken,
   generateToken,
@@ -336,5 +336,130 @@ export const refreshCSRF = TryCatch(async (req, res) => {
   res.json({
     message: "CSRF token refreshed successfully",
     csrfToken: newCSRFToken,
+  });
+});
+
+export const forgotPassword = TryCatch(async (req, res) => {
+  const sanitezedBody = sanitize(req.body);
+
+  const validation = forgotPasswordSchema.safeParse(sanitezedBody);
+
+  if (!validation.success) {
+    const zodError = validation.error;
+
+    let firstErrorMessage = "Validation failed";
+    let allErrors = [];
+
+    if (zodError?.issues && Array.isArray(zodError.issues)) {
+      allErrors = zodError.issues.map((issue) => ({
+        field: issue.path ? issue.path.join(".") : "unknown",
+        message: issue.message || "Validation Error",
+        code: issue.code,
+      }));
+
+      firstErrorMessage = allErrors[0]?.message || "Validation Error";
+    }
+    return res.status(400).json({
+      message: firstErrorMessage,
+      error: allErrors,
+    });
+  }
+
+  const { email } = validation.data;
+
+  const rateLimitKey = `forgot-password-rate-limit:${req.ip}:${email}`;
+
+  if (await redisClient.get(rateLimitKey)) {
+    return res.status(429).json({
+      message: "Too many requests, try again later",
+    });
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    await redisClient.set(rateLimitKey, "true", { EX: 60 });
+    return res.json({
+      message: "If your email is registered, a password reset link has been sent. It will expire in 15 minutes",
+    });
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  const resetKey = `reset-password:${resetToken}`;
+
+  await redisClient.set(resetKey, JSON.stringify({ userId: user._id.toString(), email }), { EX: 900 }); // 15 minutes
+
+  const subject = "Reset your password";
+  const html = getResetPasswordHtml({ email, token: resetToken });
+
+  await sendMail({ email, subject, html });
+
+  await redisClient.set(rateLimitKey, "true", { EX: 60 });
+
+  res.json({
+    message: "If your email is registered, a password reset link has been sent. It will expire in 15 minutes",
+  });
+});
+
+export const resetPassword = TryCatch(async (req, res) => {
+  const sanitezedBody = sanitize(req.body);
+
+  const validation = resetPasswordSchema.safeParse(sanitezedBody);
+
+  if (!validation.success) {
+    const zodError = validation.error;
+
+    let firstErrorMessage = "Validation failed";
+    let allErrors = [];
+
+    if (zodError?.issues && Array.isArray(zodError.issues)) {
+      allErrors = zodError.issues.map((issue) => ({
+        field: issue.path ? issue.path.join(".") : "unknown",
+        message: issue.message || "Validation Error",
+        code: issue.code,
+      }));
+
+      firstErrorMessage = allErrors[0]?.message || "Validation Error";
+    }
+    return res.status(400).json({
+      message: firstErrorMessage,
+      error: allErrors,
+    });
+  }
+
+  const { token, password } = validation.data;
+
+  const resetKey = `reset-password:${token}`;
+
+  const resetDataJson = await redisClient.get(resetKey);
+
+  if (!resetDataJson) {
+    return res.status(400).json({
+      message: "Reset link is invalid or expired",
+    });
+  }
+
+  await redisClient.del(resetKey);
+
+  const resetData = JSON.parse(resetDataJson);
+
+  const user = await User.findById(resetData.userId);
+
+  if (!user) {
+    return res.status(400).json({
+      message: "User not found",
+    });
+  }
+
+  const hashPassword = await bcrypt.hash(password, 10);
+
+  user.password = hashPassword;
+  await user.save();
+
+  await revokeRefershToken(user._id);
+
+  res.json({
+    message: "Password reset successfully. Please login with your new password",
   });
 });

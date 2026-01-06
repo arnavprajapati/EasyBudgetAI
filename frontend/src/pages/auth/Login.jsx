@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { server } from "../../main";
-import { X } from "lucide-react"; 
+import { X } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -71,6 +71,14 @@ const Login = () => {
                 className="w-full font-semibold px-4 py-2 border rounded-lg focus:ring-[#387ED1] focus:border-[#387ED1]"
                 required
               />
+              <div className="mt-2 text-right">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-gray-600 cursor-pointer hover:text-[#387ED1] font-semibold"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
 
             <button
