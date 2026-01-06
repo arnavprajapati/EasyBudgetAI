@@ -172,9 +172,15 @@ export const generateToken = async (id, res) => {
 
   const refreshToken = jwt.sign(
     { id, sessionId },
-    process.env.JWT_SECRET,
+    process.env.REFRESH_SECRET,
     { expiresIn: "7d" }
   );
+
+  const existingSessionId = await redisClient.get(`active_session:${id}`);
+  if (existingSessionId) {
+    await redisClient.del(`session:${existingSessionId}`);
+  }
+  await redisClient.del(`refresh_token:${id}`);
 
   const sessionData = {
     userId: id,
@@ -182,6 +188,18 @@ export const generateToken = async (id, res) => {
     createdAt: new Date().toISOString(),
     lastActivity: new Date().toISOString(),
   };
+
+  await redisClient.setEx(
+    `refresh_token:${id}`,
+    7 * 24 * 60 * 60,
+    refreshToken
+  );
+
+  await redisClient.setEx(
+    `active_session:${id}`,
+    7 * 24 * 60 * 60,
+    sessionId
+  );
 
   await redisClient.setEx(
     `session:${sessionId}`,
