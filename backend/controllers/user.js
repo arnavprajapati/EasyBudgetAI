@@ -1,5 +1,5 @@
 import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from "../config/zod.js";
-import { redisClient } from "../index.js";
+import { redisClient } from "../config/redis.js";
 import TryCatch from "../middlewares/TryCatch.js";
 import sanitize from "mongo-sanitize";
 import { User } from "../models/User.js";

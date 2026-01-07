@@ -276,9 +276,84 @@ const handleExpenseMessage = async (msg) => {
     }
 
     try {
-        const result = await saveExpensesFromTelegram(telegramUserId, messageText);
+        const { getPendingTransaction, clearPendingTransaction } = await import("./config/partyMatcher.js");
+        const pendingData = await getPendingTransaction(telegramUserId);
 
-        if (!result.success && !result.message) {
+        if (pendingData && pendingData.waitingForPartyName) {
+            const newPartyName = messageText.trim();
+            const { transaction } = pendingData;
+
+            const { User } = await import("./models/User.js");
+            const { Expense } = await import("./models/Expense.js");
+
+            const user = await User.findOne({ telegramUserId });
+            if (!user) {
+                await bot.sendMessage(chatId, "❌ Account not linked. Use /start first.", { parse_mode: "HTML" });
+                return;
+            }
+
+            const descLower = transaction.description?.toLowerCase() || '';
+            const isPending = descLower.includes('pending:') ||
+                descLower.includes('to receive') ||
+                descLower.includes('to pay');
+
+            await Expense.create({
+                userId: user._id,
+                telegramId: telegramUserId,
+                amount: transaction.amount,
+                description: transaction.description,
+                category: transaction.category,
+                type: transaction.type,
+                date: new Date(),
+                source: "telegram",
+                partyName: newPartyName,
+                isPending: isPending,
+            });
+
+            await clearPendingTransaction(telegramUserId);
+
+            const typeEmoji = transaction.type === 'credit' ? '💰' : '💸';
+            let confirmMsg = `✅ <b>Transaction Saved!</b>\n\n`;
+            confirmMsg += `${typeEmoji} Amount: ₹${transaction.amount}\n`;
+            confirmMsg += `📝 ${transaction.description}\n`;
+            confirmMsg += `🏷️ Category: ${transaction.category}\n`;
+            confirmMsg += `👤 Party: ${newPartyName} <i>(New)</i>\n`;
+            if (isPending) {
+                confirmMsg += `⏳ Status: Pending\n`;
+            }
+
+            await bot.sendMessage(chatId, confirmMsg, { parse_mode: "HTML" });
+            return;
+        }
+
+        const result = await saveExpensesFromTelegram(telegramUserId, messageText, { checkParty: true });
+
+        if (!result.success && !result.message && !result.needsClarification) {
+            return;
+        }
+
+        if (result.needsClarification) {
+            const { clarificationData } = result;
+            const { clarificationInfo, transaction, transactionIndex } = clarificationData;
+
+            const { storePendingTransaction, buildPartySelectionKeyboard, formatClarificationMessage } = await import("./config/partyMatcher.js");
+            await storePendingTransaction(telegramUserId, clarificationData);
+
+            const keyboard = buildPartySelectionKeyboard({
+                similarParties: clarificationInfo.similarParties || [],
+                recentParties: clarificationInfo.recentParties || [],
+                originalPartyName: clarificationInfo.originalPartyName || transaction.partyName,
+                transactionIndex: transactionIndex || 0,
+                showCreateNew: true,
+                showSkip: true
+            });
+
+            const message = formatClarificationMessage(transaction, clarificationInfo);
+
+            await bot.sendMessage(chatId, message, {
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
             return;
         }
 
@@ -296,6 +371,119 @@ const handleExpenseMessage = async (msg) => {
         });
     }
 };
+
+const handleCallbackQuery = async (callbackQuery) => {
+    const chatId = callbackQuery.message.chat.id;
+    const messageId = callbackQuery.message.message_id;
+    const telegramUserId = callbackQuery.from.id.toString();
+    const data = callbackQuery.data;
+
+    try {
+        const { getPendingTransaction, clearPendingTransaction } = await import("./config/partyMatcher.js");
+        const pendingData = await getPendingTransaction(telegramUserId);
+
+        if (!pendingData) {
+            await bot.answerCallbackQuery(callbackQuery.id, { text: "Session expired. Please try again." });
+            await bot.deleteMessage(chatId, messageId);
+            return;
+        }
+
+        const { transaction, allTransactions } = pendingData;
+        let selectedParty = null;
+
+        const [action, indexStr, ...valueParts] = data.split(':');
+        const value = valueParts.join(':'); // Rejoin in case party name has colons
+
+        if (action === 'party_select') {
+            selectedParty = value;
+        } else if (action === 'party_new') {
+            const { storePendingTransaction } = await import("./config/partyMatcher.js");
+            await storePendingTransaction(telegramUserId, {
+                ...pendingData,
+                waitingForPartyName: true,
+                originalPartyName: value || transaction.partyName
+            });
+
+            await bot.deleteMessage(chatId, messageId);
+
+            const promptMsg = `✏️ <b>Enter Unique Party Name</b>\n\n` +
+                `Original: "<b>${value || transaction.partyName}</b>"\n\n` +
+                `💡 <i>Add identifier to make it unique:</i>\n` +
+                `• ${value || transaction.partyName} Office\n` +
+                `• ${value || transaction.partyName} College\n` +
+                `• ${value || transaction.partyName} Delhi\n\n` +
+                `<i>Send the new party name as a message...</i>`;
+
+            await bot.sendMessage(chatId, promptMsg, { parse_mode: "HTML" });
+            await bot.answerCallbackQuery(callbackQuery.id, { text: "Enter new party name" });
+            return;
+        } else if (action === 'party_skip') {
+            selectedParty = null;
+        } else if (action === 'party_cancel') {
+            await clearPendingTransaction(telegramUserId);
+            await bot.deleteMessage(chatId, messageId);
+            await bot.answerCallbackQuery(callbackQuery.id, { text: "Transaction cancelled" });
+            return;
+        } else if (action === 'party_prompt') {
+            await bot.answerCallbackQuery(callbackQuery.id, { text: "Please send the party name as a message" });
+            return;
+        }
+
+        transaction.partyName = selectedParty;
+
+        const { User } = await import("./models/User.js");
+        const { Expense } = await import("./models/Expense.js");
+
+        const user = await User.findOne({ telegramUserId });
+        if (!user) {
+            await bot.answerCallbackQuery(callbackQuery.id, { text: "Account not linked!" });
+            return;
+        }
+
+        const descLower = transaction.description?.toLowerCase() || '';
+        const isPending = descLower.includes('pending:') ||
+            descLower.includes('to receive') ||
+            descLower.includes('to pay');
+
+        await Expense.create({
+            userId: user._id,
+            telegramId: telegramUserId,
+            amount: transaction.amount,
+            description: transaction.description,
+            category: transaction.category,
+            type: transaction.type,
+            date: new Date(),
+            source: "telegram",
+            partyName: selectedParty,
+            isPending: isPending,
+        });
+
+        await clearPendingTransaction(telegramUserId);
+
+        await bot.deleteMessage(chatId, messageId);
+
+        const typeEmoji = transaction.type === 'credit' ? '💰' : '💸';
+        let confirmMsg = `✅ <b>Transaction Saved!</b>\n\n`;
+        confirmMsg += `${typeEmoji} Amount: ₹${transaction.amount}\n`;
+        confirmMsg += `📝 ${transaction.description}\n`;
+        confirmMsg += `🏷️ Category: ${transaction.category}\n`;
+        if (selectedParty) {
+            confirmMsg += `👤 Party: ${selectedParty}\n`;
+        }
+        if (isPending) {
+            confirmMsg += `⏳ Status: Pending\n`;
+        }
+
+        await bot.sendMessage(chatId, confirmMsg, { parse_mode: "HTML" });
+        await bot.answerCallbackQuery(callbackQuery.id, { text: "✅ Saved!" });
+
+    } catch (error) {
+        console.error("Error handling callback query:", error);
+        await bot.answerCallbackQuery(callbackQuery.id, { text: "Error occurred. Try again." });
+    }
+};
+
+bot.on("callback_query", handleCallbackQuery);
 
 const handleToday = async (msg) => {
     const chatId = msg.chat.id;

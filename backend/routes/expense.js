@@ -7,6 +7,8 @@ import {
     updateExpense,
     deleteExpense,
     parseExpenseText,
+    getParties,
+    getPartyTransactions,
 } from "../controllers/expense.js";
 import { isAuth } from "../middlewares/isAuth.js";
 import { verifyCSRFToken } from "../config/csrfMiddleware.js";
@@ -21,5 +23,9 @@ router.get("/summary", isAuth, getExpenseSummary);
 router.put("/:id", isAuth, verifyCSRFToken, updateExpense);
 router.delete("/:id", isAuth, verifyCSRFToken, deleteExpense);
 router.post("/parse", isAuth, parseExpenseText);
+
+// Party/Khata routes
+router.get("/parties", isAuth, getParties);
+router.get("/parties/:partyName", isAuth, getPartyTransactions);
 
 export default router;
