@@ -153,7 +153,7 @@ const Party = () => {
                                 <p className="text-gray-500 font-bold">
                                     {searchQuery ? 'No parties found matching your search' : 'No parties yet'}
                                 </p>
-                                <p className="text-gray-400 text-sm mt-1">
+                                <p className="text-gray-400 font-bold text-sm mt-1">
                                     Parties are automatically detected from your Telegram transactions
                                 </p>
                             </div>
