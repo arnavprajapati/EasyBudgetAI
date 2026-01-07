@@ -736,61 +736,70 @@ export async function setupTelegramWebhook(app) {
         });
         console.log("✅ Express webhook endpoint registered");
 
-        try {
-            const deleteResponse = await fetch(
-                `https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook?drop_pending_updates=true`
-            );
-            const deleteData = await deleteResponse.json();
+        setTimeout(async () => {
+            try {
+                try {
+                    const deleteResponse = await fetch(
+                        `https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook?drop_pending_updates=true`,
+                        { timeout: 10000 }
+                    );
+                    const deleteData = await deleteResponse.json();
 
-            if (deleteData.ok) {
-                console.log("🗑️  Old webhook deleted successfully");
-            } else {
-                console.log("ℹ️  No old webhook or error deleting:", deleteData.description);
+                    if (deleteData.ok) {
+                        console.log("🗑️  Old webhook deleted successfully");
+                    } else {
+                        console.log("ℹ️  No old webhook or error deleting:", deleteData.description);
+                    }
+                } catch (deleteError) {
+                    console.log("ℹ️  Error deleting old webhook:", deleteError.message);
+                }
+
+                const setResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        url: fullWebhookUrl,
+                        drop_pending_updates: true,
+                        allowed_updates: ["message", "callback_query"],
+                    }),
+                });
+
+                const setData = await setResponse.json();
+
+                if (setData.ok) {
+                    console.log("✅ Webhook set successfully!");
+                } else {
+                    console.error("❌ Failed to set webhook:", setData.description);
+                    return;
+                }
+
+                const infoResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo`);
+                const webhookInfo = await infoResponse.json();
+
+                if (webhookInfo.ok) {
+                    const info = webhookInfo.result;
+                    console.log("📊 Webhook Status:");
+                    console.log("   URL:", info.url);
+                    console.log("   Pending updates:", info.pending_update_count);
+                    console.log("   Max connections:", info.max_connections);
+
+                    if (info.last_error_date) {
+                        const errorDate = new Date(info.last_error_date * 1000);
+                        console.warn("⚠️  Last error date:", errorDate.toLocaleString());
+                        console.warn("⚠️  Last error message:", info.last_error_message);
+                    } else {
+                        console.log("✅ No webhook errors - bot is ready!");
+                    }
+                }
+            } catch (webhookError) {
+                console.error("⚠️ Telegram webhook setup error (non-fatal):", webhookError.message);
+                console.log("ℹ️  Server will continue running. Webhook may need manual setup.");
             }
-        } catch (deleteError) {
-            console.log("ℹ️  Error deleting old webhook:", deleteError.message);
-        }
+        }, 3000); 
 
-        const setResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                url: fullWebhookUrl,
-                drop_pending_updates: true,
-                allowed_updates: ["message", "callback_query"],
-            }),
-        });
-
-        const setData = await setResponse.json();
-
-        if (setData.ok) {
-            console.log("✅ Webhook set successfully!");
-        } else {
-            console.error("❌ Failed to set webhook:", setData.description);
-            return;
-        }
-
-        const infoResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo`);
-        const webhookInfo = await infoResponse.json();
-
-        if (webhookInfo.ok) {
-            const info = webhookInfo.result;
-            console.log("📊 Webhook Status:");
-            console.log("   URL:", info.url);
-            console.log("   Pending updates:", info.pending_update_count);
-            console.log("   Max connections:", info.max_connections);
-
-            if (info.last_error_date) {
-                const errorDate = new Date(info.last_error_date * 1000);
-                console.warn("⚠️  Last error date:", errorDate.toLocaleString());
-                console.warn("⚠️  Last error message:", info.last_error_message);
-            } else {
-                console.log("✅ No webhook errors - bot is ready!");
-            }
-        }
     } catch (error) {
         console.error("❌ Failed to setup Telegram webhook:", error.message);
-        console.error("Stack:", error.stack);
+        console.log("ℹ️  Server will continue running without Telegram webhook.");
     }
 }
 
