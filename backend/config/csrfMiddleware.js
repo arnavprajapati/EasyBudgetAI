@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { redisClient } from "../index.js";
+import { redisClient } from "./redis.js";
 import dotenv from "dotenv";
 
 dotenv.config();

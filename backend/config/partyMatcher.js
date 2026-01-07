@@ -269,41 +269,38 @@ export const needsPartyClarification = async (userId, transaction) => {
     const inputNameLower = partyName.toLowerCase().trim();
     const inputFirstName = inputNameLower.split(' ')[0];
 
-    const exactMatch = existingParties.find(p =>
-        p.name.toLowerCase().trim() === inputNameLower
-    );
-
-    if (exactMatch) {
-        return {
-            needsClarification: true,
-            reason: "exact_match_confirm",
-            similarParties: [{ ...exactMatch, similarity: 1.0 }],
-            originalPartyName: partyName
-        };
-    }
-
-    const partialMatches = existingParties.filter(party => {
+    // Find all parties with same first name or exact match
+    const matchingParties = existingParties.filter(party => {
         const existingNameLower = party.name.toLowerCase().trim();
         const existingFirstName = existingNameLower.split(' ')[0];
 
+        // Exact match
+        if (existingNameLower === inputNameLower) return true;
+
+        // Same first name (e.g., "Gaurav", "Gaurav Delhi", "Gaurav Office")
         if (existingFirstName === inputFirstName) return true;
 
+        // Contains first name
         if (existingNameLower.includes(inputFirstName) || inputNameLower.includes(existingFirstName)) return true;
 
+        // High similarity
         const similarity = similarityScore(partyName, party.name);
         if (similarity >= 0.6) return true;
 
         return false;
     });
 
-    if (partialMatches.length > 0) {
+    if (matchingParties.length > 0) {
+        // Sort by similarity and exact matches first
+        const sortedMatches = matchingParties.map(p => ({
+            ...p,
+            similarity: p.name.toLowerCase().trim() === inputNameLower ? 1.0 : similarityScore(partyName, p.name)
+        })).sort((a, b) => b.similarity - a.similarity);
+
         return {
             needsClarification: true,
-            reason: "similar_name_exists",
-            similarParties: partialMatches.map(p => ({
-                ...p,
-                similarity: similarityScore(partyName, p.name)
-            })).sort((a, b) => b.similarity - a.similarity),
+            reason: sortedMatches[0].similarity === 1.0 ? "exact_match_confirm" : "similar_name_exists",
+            similarParties: sortedMatches,
             originalPartyName: partyName
         };
     }

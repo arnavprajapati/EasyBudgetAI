@@ -51,6 +51,14 @@ const schema = new mongoose.Schema(
             enum: ["telegram", "web"],
             default: "web",
         },
+        partyName: {
+            type: String,
+            default: null,
+        },
+        isPending: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );
@@ -58,5 +66,6 @@ const schema = new mongoose.Schema(
 schema.index({ userId: 1, date: -1 });
 schema.index({ telegramId: 1 });
 schema.index({ userId: 1, type: 1 });
+schema.index({ userId: 1, partyName: 1 });
 
 export const Expense = mongoose.model("Expense", schema);

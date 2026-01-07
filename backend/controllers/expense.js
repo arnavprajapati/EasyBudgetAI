@@ -39,12 +39,12 @@ export const addExpense = TryCatch(async (req, res) => {
 
     let expenseCategory;
     if (transactionType === "credit") {
-        expenseCategory = validCreditCategories.includes(category) 
-            ? category 
+        expenseCategory = validCreditCategories.includes(category)
+            ? category
             : "Received from Others";
     } else {
-        expenseCategory = validDebitCategories.includes(category) 
-            ? category 
+        expenseCategory = validDebitCategories.includes(category)
+            ? category
             : "Miscellaneous";
     }
 
@@ -95,12 +95,12 @@ export const addBulkExpenses = TryCatch(async (req, res) => {
         let category;
 
         if (transactionType === "credit") {
-            category = validCreditCategories.includes(txn.category) 
-                ? txn.category 
+            category = validCreditCategories.includes(txn.category)
+                ? txn.category
                 : "Received from Others";
         } else {
-            category = validDebitCategories.includes(txn.category) 
-                ? txn.category 
+            category = validDebitCategories.includes(txn.category)
+                ? txn.category
                 : "Miscellaneous";
         }
 
@@ -296,7 +296,7 @@ export const parseExpenseText = TryCatch(async (req, res) => {
         });
     }
 
-    const parsed = await parseExpenses(text); 
+    const parsed = await parseExpenses(text);
 
     res.json({
         message: "Text parsed successfully",
@@ -304,7 +304,9 @@ export const parseExpenseText = TryCatch(async (req, res) => {
     });
 });
 
-export const saveExpensesFromTelegram = async (telegramUserId, messageText) => {
+export const saveExpensesFromTelegram = async (telegramUserId, messageText, options = {}) => {
+    const { checkParty = false } = options;
+
     try {
         const user = await User.findOne({ telegramUserId });
 
@@ -315,7 +317,7 @@ export const saveExpensesFromTelegram = async (telegramUserId, messageText) => {
             };
         }
 
-        const parsed = await parseExpenses(messageText); 
+        const parsed = await parseExpenses(messageText);
 
         if (!parsed.transactions || parsed.transactions.length === 0) {
             return {
@@ -324,16 +326,48 @@ export const saveExpensesFromTelegram = async (telegramUserId, messageText) => {
             };
         }
 
-        const expensesToCreate = parsed.transactions.map((txn) => ({
-            userId: user._id,
-            telegramId: telegramUserId,
-            amount: txn.amount,
-            description: txn.description,
-            category: txn.category,
-            type: txn.type,
-            date: new Date(),
-            source: "telegram",
-        }));
+        // Check if party clarification is needed (only if checkParty is enabled)
+        if (checkParty) {
+            const { needsPartyClarification } = await import("../config/partyMatcher.js");
+            for (let i = 0; i < parsed.transactions.length; i++) {
+                const txn = parsed.transactions[i];
+                const clarification = await needsPartyClarification(user._id, txn);
+
+                if (clarification.needsClarification) {
+                    return {
+                        success: false,
+                        needsClarification: true,
+                        clarificationData: {
+                            transaction: txn,
+                            clarificationInfo: clarification,
+                            transactionIndex: i,
+                            allTransactions: parsed.transactions
+                        },
+                        user: { name: user.name, email: user.email }
+                    };
+                }
+            }
+        }
+
+        const expensesToCreate = parsed.transactions.map((txn) => {
+            // Check if this is a pending transaction (lena hai / dena hai)
+            const isPending = txn.description?.toLowerCase().includes('pending:') ||
+                txn.description?.toLowerCase().includes('to receive') ||
+                txn.description?.toLowerCase().includes('to pay');
+
+            return {
+                userId: user._id,
+                telegramId: telegramUserId,
+                amount: txn.amount,
+                description: txn.description,
+                category: txn.category,
+                type: txn.type,
+                date: new Date(),
+                source: "telegram",
+                partyName: txn.partyName || null,
+                isPending: isPending,
+            };
+        });
 
         await Expense.insertMany(expensesToCreate);
 
@@ -350,3 +384,149 @@ export const saveExpensesFromTelegram = async (telegramUserId, messageText) => {
         };
     }
 };
+
+// Get all parties (khata) for a user with balance summary
+export const getParties = TryCatch(async (req, res) => {
+    const userId = req.user._id;
+
+    // Get all transactions with party names
+    const transactions = await Expense.find({
+        userId,
+        partyName: { $ne: null, $exists: true }
+    }).sort({ date: -1 }).lean();
+
+    // Group by party and calculate balances
+    const partyMap = new Map();
+
+    for (const txn of transactions) {
+        const partyName = txn.partyName;
+        if (!partyName) continue;
+
+        const key = partyName.toLowerCase();
+        const existing = partyMap.get(key);
+
+        // Calculate khata logic:
+        // "maine diya" / "given" = they owe me (To Receive)
+        // "maine liya" / "received" = I owe them (To Give)  
+        // "lena hai" / "to receive" = pending receivable
+        // "dena hai" / "to pay" = pending payable
+
+        const descLower = txn.description?.toLowerCase() || '';
+        const isToReceive = txn.isPending && descLower.includes('to receive');
+        const isToPay = txn.isPending && descLower.includes('to pay');
+
+        // For completed transactions:
+        // If I gave money (debit to Personal), they owe me
+        // If I received money (credit from Others), I owe them
+        const isGiven = !txn.isPending && txn.type === 'debit' &&
+            (txn.category === 'Personal & Transfers');
+        const isReceived = !txn.isPending && txn.type === 'credit' &&
+            (txn.category === 'Received from Others');
+
+        if (existing) {
+            existing.count++;
+            existing.lastActivity = Math.max(existing.lastActivity, new Date(txn.date).getTime());
+
+            if (isToReceive) {
+                existing.toReceive += txn.amount;
+            } else if (isToPay) {
+                existing.toGive += txn.amount;
+            } else if (isGiven) {
+                existing.toReceive += txn.amount; // They owe me
+            } else if (isReceived) {
+                existing.toGive += txn.amount; // I owe them
+            }
+
+            existing.transactions.push(txn);
+        } else {
+            partyMap.set(key, {
+                name: partyName,
+                count: 1,
+                lastActivity: new Date(txn.date).getTime(),
+                toReceive: (isToReceive || isGiven) ? txn.amount : 0,
+                toGive: (isToPay || isReceived) ? txn.amount : 0,
+                transactions: [txn]
+            });
+        }
+    }
+
+    // Convert to array and calculate net balance
+    const parties = Array.from(partyMap.values())
+        .map(party => ({
+            name: party.name,
+            count: party.count,
+            lastActivity: party.lastActivity,
+            toReceive: party.toReceive,
+            toGive: party.toGive,
+            netBalance: party.toReceive - party.toGive, // Positive = they owe me
+        }))
+        .sort((a, b) => b.lastActivity - a.lastActivity);
+
+    res.json({
+        success: true,
+        parties,
+        summary: {
+            totalToReceive: parties.reduce((sum, p) => sum + p.toReceive, 0),
+            totalToGive: parties.reduce((sum, p) => sum + p.toGive, 0),
+            netBalance: parties.reduce((sum, p) => sum + p.netBalance, 0)
+        }
+    });
+});
+
+// Get all transactions for a specific party
+export const getPartyTransactions = TryCatch(async (req, res) => {
+    const userId = req.user._id;
+    const { partyName } = req.params;
+
+    if (!partyName) {
+        return res.status(400).json({
+            success: false,
+            message: "Party name is required"
+        });
+    }
+
+    const transactions = await Expense.find({
+        userId,
+        partyName: { $regex: new RegExp(`^${partyName}$`, 'i') }
+    }).sort({ date: -1 }).lean();
+
+    // Calculate running balance
+    let toReceive = 0;
+    let toGive = 0;
+
+    const processedTransactions = transactions.map(txn => {
+        const descLower = txn.description?.toLowerCase() || '';
+        const isToReceive = txn.isPending && descLower.includes('to receive');
+        const isToPay = txn.isPending && descLower.includes('to pay');
+        const isGiven = !txn.isPending && txn.type === 'debit' &&
+            txn.category === 'Personal & Transfers';
+        const isReceived = !txn.isPending && txn.type === 'credit' &&
+            txn.category === 'Received from Others';
+
+        if (isToReceive || isGiven) {
+            toReceive += txn.amount;
+        } else if (isToPay || isReceived) {
+            toGive += txn.amount;
+        }
+
+        return {
+            ...txn,
+            khataType: isToReceive ? 'To Receive (Pending)' :
+                isToPay ? 'To Pay (Pending)' :
+                    isGiven ? 'Given (To Receive)' :
+                        isReceived ? 'Received (To Pay)' : 'Other'
+        };
+    });
+
+    res.json({
+        success: true,
+        partyName,
+        transactions: processedTransactions,
+        summary: {
+            toReceive,
+            toGive,
+            netBalance: toReceive - toGive,
+            transactionCount: transactions.length
+        }
+    });
+});

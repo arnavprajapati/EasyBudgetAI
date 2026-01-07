@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { redisClient } from "../index.js";
+import { redisClient } from "../config/redis.js";
 import { User } from "../models/User.js";
 import { isSessionActive } from "../config/generateToken.js";
 
@@ -32,7 +32,6 @@ export const isAuth = async (req, res, next) => {
     console.log('🔄 Session Active:', sessionActive);
 
     if (!sessionActive) {
-      // Clear cookies for cross-origin
       const clearOptions = {
         path: "/",
         secure: true,

@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import connectDb from "./config/db.js";
-import { createClient } from "redis";
+import { redisClient, connectRedis } from "./config/redis.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { setupTelegramWebhook } from "./Telegrambot.js";
@@ -9,22 +9,7 @@ import { setupTelegramWebhook } from "./Telegrambot.js";
 dotenv.config();
 
 await connectDb();
-
-const redisUrl = process.env.REDIS_URL;
-
-if (!redisUrl) {
-  console.log("Missing redis url");
-  process.exit(1);
-}
-
-export const redisClient = createClient({
-  url: redisUrl,
-});
-
-redisClient
-  .connect()
-  .then(() => console.log("✅ Connected to Redis"))
-  .catch(console.error);
+await connectRedis();
 
 const app = express();
 
@@ -33,7 +18,7 @@ app.use(cookieParser());
 
 const allowedOrigins = [
   "https://www.smartkhata.me",
-  "https://smartkhata.me", 
+  "https://smartkhata.me",
   "http://localhost:5173",
   "http://localhost:5000"
 ];
@@ -41,11 +26,11 @@ const allowedOrigins = [
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    
+
     return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,

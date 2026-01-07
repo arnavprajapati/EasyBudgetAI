@@ -4,79 +4,109 @@ dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const SYSTEM_PROMPT = `You are an expense parser for an Indian budget tracking app called SmartKhata.
+const SYSTEM_PROMPT = `You are a smart financial assistant for SmartKhata - an Indian expense & khata tracking app.
 
-Your task: Analyze Telegram text messages and convert them into clean, structured transaction data (both expenses AND income).
+YOUR CORE ABILITY: Understand the MEANING and INTENT of any message, regardless of language, spelling, or grammar.
 
-Input characteristics:
-- The input may contain ONE or MULTIPLE transaction lines.
-- Each line represents either an EXPENSE (debit) or INCOME (credit).
-- Language can be Hinglish / English / Hindi / casual text.
-- Spelling mistakes are possible.
+Think like a human accountant reading a WhatsApp/Telegram message from a friend. Understand:
+1. Did money COME IN to my pocket? → CREDIT
+2. Did money GO OUT from my pocket? → DEBIT
+3. Is someone recording a future due/pending? → Also track appropriately
 
-Your responsibilities:
-1. Split the text into individual transaction entries.
-2. For each transaction:
-    - Determine if it's a DEBIT (expense/spent) or CREDIT (income/received).
-    - Extract the amount (mandatory, in INR).
-    - Rewrite the description in clean, readable English.
-    - Assign EXACTLY ONE category from the fixed list below.
-3. If the category is unclear, assign "Miscellaneous".
-4. Do NOT invent new categories.
-5. Ignore commands, emojis, or filler words.
-6. If an amount is missing in any line, skip that line completely.
+INPUT REALITY:
+- People write in ANY language: Hindi, English, Hinglish, broken grammar, typos
+- They may use slang, abbreviations, or incomplete sentences
+- One message may have multiple transactions
+- A party name (person/business) may or may not be mentioned
 
-TRANSACTION TYPE DETECTION:
-- CREDIT (income/received): Keywords like "mila", "aya", "received", "salary", "income", "refund", "cashback", "got", "paid me", "payment received", "se liya", "friend ne diya", "paisa aya"
-- DEBIT (expense/spent): Everything else (default) - "khaya", "kharida", "diya", "paid", "bought", "spent"
+YOUR JOB - SEMANTIC UNDERSTANDING (NOT KEYWORDS):
+Don't match keywords. UNDERSTAND the meaning:
 
-Allowed categories (STRICT - use exactly as written):
+CREDIT means: Money came INTO my account/pocket
+- "Raj ne 500 diye" → Raj GAVE me 500 → Money came to ME → CREDIT ✓
+- "Salary aa gayi 50000" → Salary arrived → Money came to ME → CREDIT ✓
+- "Amazon se refund mila" → Got refund → Money came to ME → CREDIT ✓
+- "Bhai se 2000 liye udhar" → Borrowed/took from brother → Money came to ME → CREDIT ✓
 
-DEBIT Categories (Expenses):
-- Food & Dining
-- Travel & Transport
-- Housing / Rent
-- Shopping & Entertainment
-- Bills & Utilities
-- Personal & Transfers
-- Miscellaneous
+DEBIT means: Money went OUT from my account/pocket
+- "Rajesh ko 500 diye" → I GAVE Rajesh 500 → Money went FROM me → DEBIT ✓
+- "Uber 150" → Spent on uber → Money went FROM me → DEBIT ✓
+- "Chai 20 rs" → Spent on chai → Money went FROM me → DEBIT ✓
+- "Rent pay kiya 15000" → Paid rent → Money went FROM me → DEBIT ✓
 
-CREDIT Categories (Income):
-- Salary & Income
-- Refunds & Returns
-- Received from Others
+⚠️ CRITICAL - PENDING/DUE ENTRIES (lena hai / dena hai):
+These are NOT actual transactions - money has NOT moved yet! Handle carefully:
 
-Category mapping examples:
+"lena hai" / "milna hai" / "wapas lena hai" = PENDING TO RECEIVE (Someone owes me)
+→ Money has NOT come yet, so this is NOT CREDIT
+→ Record as DEBIT in "Personal & Transfers" with description "Pending: To receive from X"
+→ Example: "Lenskart se 1800 lena hai" → DEBIT, "Pending: To receive 1800 from Lenskart"
 
-DEBIT (Expenses):
-- "chai", "khana", "roti", "paneer", "juice", "zomato", "swiggy", "groceries", "nashta", "lunch", "dinner" → Food & Dining
-- "uber", "ola", "auto", "petrol", "bus", "metro", "rapido", "cab", "taxi", "parking" → Travel & Transport
-- "rent", "bijli", "electricity", "water bill", "gas bill", "maintenance", "ghar" → Housing / Rent
-- "shopping", "movie", "cinema", "theater", "concert", "game", "entertainment" → Shopping & Entertainment
-- "recharge", "wifi", "netflix", "mobile", "internet", "subscription", "gym" → Bills & Utilities
-- "friend ko diye", "sent to", "given to", "transfer", "upi", "udhar diya" → Personal & Transfers
+"dena hai" / "bharna hai" / "wapas dena hai" = PENDING TO PAY (I owe someone)  
+→ Money has NOT gone yet, so this is a future expense
+→ Record as DEBIT in "Personal & Transfers" with description "Pending: To pay X"
+→ Example: "Rajesh ko 500 dena hai" → DEBIT, "Pending: To pay 500 to Rajesh"
 
-CREDIT (Income):
-- "salary", "income", "kamaya", "payment mila", "freelance", "business income" → Salary & Income
-- "refund", "cashback", "return", "wapas mila", "cancelled order" → Refunds & Returns
-- "friend se liya", "received from", "paisa aya", "dost ne diye", "payment received", "udhar wapas mila" → Received from Others
+KEY DIFFERENCE:
+- "Raj se 500 LIYE" = PAST tense = Money ALREADY received = CREDIT ✓
+- "Raj se 500 LENA HAI" = FUTURE tense = Money NOT received yet = DEBIT (pending) ✓
+- "Raj ko 500 DIYE" = PAST tense = Money ALREADY given = DEBIT ✓
+- "Raj ko 500 DENA HAI" = FUTURE tense = Money NOT given yet = DEBIT (pending) ✓
 
-CRITICAL OUTPUT FORMAT:
-You MUST respond with ONLY a valid JSON object. No explanation, no markdown, no extra text.
+KEY SEMANTIC PATTERNS TO UNDERSTAND:
+1. WHO did the action TO WHOM?
+   - "X ne Y ko diye" = X gave to Y
+   - "X se Y ne liye" = Y took from X
+   
+2. DIRECTION relative to the USER (who is writing):
+   - "maine diye" / "ko diye" / "de diye" = I gave out = DEBIT
+   - "mujhe mile" / "se liye" / "aa gaye" = I received = CREDIT
 
+3. TENSE IS CRITICAL:
+   - PAST tense (liya/diya/mila) = Transaction COMPLETED
+   - FUTURE tense (lena hai/dena hai) = Transaction PENDING = Always DEBIT with "Pending:" prefix
+
+PARTY NAME EXTRACTION:
+- A party is a PERSON or BUSINESS involved in the transaction
+- "Shelendra ko 500" → Party: Shelendra
+- "Lenskart se refund" → Party: Lenskart  
+- "chai 50" → No party (chai is an item, not a party)
+- "uber 200" → Party: Uber (it's a company)
+- Set partyConfidence based on how sure you are (0.0 to 1.0)
+
+CATEGORIES (Use EXACTLY as written):
+
+For DEBIT:
+- Food & Dining (chai, khana, restaurant, zomato, swiggy, grocery)
+- Travel & Transport (uber, ola, auto, petrol, bus, metro, flight)
+- Housing / Rent (rent, electricity, water, gas, maintenance)
+- Shopping & Entertainment (clothes, movie, amazon shopping, gadgets)
+- Bills & Utilities (recharge, wifi, netflix, gym, subscription)
+- Personal & Transfers (sent to someone, UPI transfer, loan given, dues/payables)
+- Miscellaneous (anything else)
+
+For CREDIT:
+- Salary & Income (salary, freelance income, business income)
+- Refunds & Returns (refund, cashback, return amount)
+- Received from Others (borrowed, someone paid back, gift received, dues/receivables)
+
+OUTPUT FORMAT (STRICT JSON ONLY):
 {
     "transactions": [
         {
             "amount": <number>,
-            "description": "<clean English string>",
+            "description": "<clean readable description>",
             "category": "<exact category from list>",
-            "type": "debit" | "credit"
+            "type": "debit" | "credit",
+            "partyName": "<party name or null>",
+            "partyConfidence": <0.0 to 1.0>
         }
     ]
 }
 
-If no valid transactions found, return:
-{"transactions": []}`;
+REMEMBER: You are UNDERSTANDING language, not matching keywords. A human reading "Raj ne 500 de diye" knows Raj gave money TO the writer. You should understand the same way.
+
+If no valid transaction (no amount found), return: {"transactions": []}`;
 
 export const parseExpenses = async (messageText) => {
     if (!messageText || typeof messageText !== "string" || messageText.trim().length === 0) {
@@ -150,6 +180,8 @@ Remember: Return ONLY valid JSON with "transactions" array, nothing else.`;
                     description: txn.description.trim(),
                     category: category,
                     type: txn.type,
+                    partyName: txn.partyName && typeof txn.partyName === "string" ? txn.partyName.trim() : null,
+                    partyConfidence: typeof txn.partyConfidence === "number" ? txn.partyConfidence : 0,
                 };
             });
 
@@ -225,6 +257,8 @@ const fallbackParser = (messageText) => {
             description: description.charAt(0).toUpperCase() + description.slice(1),
             category,
             type,
+            partyName: null,
+            partyConfidence: 0,
         });
     }
 
@@ -232,35 +266,70 @@ const fallbackParser = (messageText) => {
 };
 
 export const formatExpenseResponse = (parsedData) => {
-    const transactions = Array.isArray(parsedData) 
-        ? parsedData 
+    const transactions = Array.isArray(parsedData)
+        ? parsedData
         : parsedData?.transactions || [];
-    
+
     if (!transactions || transactions.length === 0) {
         return null;
     }
 
-    const debits = transactions.filter(t => t.type === "debit");
-    const credits = transactions.filter(t => t.type === "credit");
+    const expenses = [];      
+    const income = [];         
+    const receivables = [];   
+    const payables = [];       
 
-    const totalDebit = debits.reduce((sum, exp) => sum + exp.amount, 0);
-    const totalCredit = credits.reduce((sum, exp) => sum + exp.amount, 0);
+    for (const t of transactions) {
+        const desc = t.description?.toLowerCase() || '';
+        if (desc.includes('to receive')) {
+            receivables.push(t);
+        } else if (desc.includes('to pay')) {
+            payables.push(t);
+        } else if (t.type === 'credit') {
+            income.push(t);
+        } else {
+            expenses.push(t);
+        }
+    }
 
-    let message = `✅ <b>Transactions Recorded!</b>\n\n`;
+    const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
+    const totalIncome = income.reduce((sum, t) => sum + t.amount, 0);
+    const totalReceivables = receivables.reduce((sum, t) => sum + t.amount, 0);
+    const totalPayables = payables.reduce((sum, t) => sum + t.amount, 0);
+
+    let message = `✅ <b>Transaction Recorded!</b>\n\n`;
     message += `📅 <b>Date:</b> ${new Date().toLocaleDateString("en-IN")}\n\n`;
 
-    if (credits.length > 0) {
-        message += `💰 <b>CREDIT (Income):</b>\n`;
-        credits.forEach((txn, index) => {
+    if (receivables.length > 0) {
+        message += `� <b>RECEIVABLES:</b>\n`;
+        receivables.forEach((txn, index) => {
+            const partyName = txn.partyName || 'Someone';
+            message += `${index + 1}. 🟢 +₹${txn.amount} - To receive from ${partyName}\n`;
+            message += `   <i>${txn.category}</i>\n\n`;
+        });
+    }
+
+    if (payables.length > 0) {
+        message += `📤 <b>PAYABLES:</b>\n`;
+        payables.forEach((txn, index) => {
+            const partyName = txn.partyName || 'Someone';
+            message += `${index + 1}. 🔴 -₹${txn.amount} - To pay ${partyName}\n`;
+            message += `   <i>${txn.category}</i>\n\n`;
+        });
+    }
+
+    if (income.length > 0) {
+        message += `💰 <b>INCOME:</b>\n`;
+        income.forEach((txn, index) => {
             const categoryEmoji = getCategoryEmoji(txn.category);
             message += `${index + 1}. ${categoryEmoji} +₹${txn.amount} - ${txn.description}\n`;
             message += `   <i>${txn.category}</i>\n\n`;
         });
     }
 
-    if (debits.length > 0) {
-        message += `💸 <b>DEBIT (Expenses):</b>\n`;
-        debits.forEach((txn, index) => {
+    if (expenses.length > 0) {
+        message += `💸 <b>EXPENSES:</b>\n`;
+        expenses.forEach((txn, index) => {
             const categoryEmoji = getCategoryEmoji(txn.category);
             message += `${index + 1}. ${categoryEmoji} -₹${txn.amount} - ${txn.description}\n`;
             message += `   <i>${txn.category}</i>\n\n`;
@@ -268,13 +337,10 @@ export const formatExpenseResponse = (parsedData) => {
     }
 
     message += `━━━━━━━━━━━━━━━━━\n`;
-    if (credits.length > 0) message += `💚 <b>Total Credit:</b> +₹${totalCredit}\n`;
-    if (debits.length > 0) message += `❤️ <b>Total Debit:</b> -₹${totalDebit}\n`;
-
-    const netBalance = totalCredit - totalDebit;
-    if (credits.length > 0 && debits.length > 0) {
-        message += `📊 <b>Net:</b> ${netBalance >= 0 ? '+' : ''}₹${netBalance}`;
-    }
+    if (receivables.length > 0) message += `� <b>Total Receivables:</b> +₹${totalReceivables}\n`;
+    if (payables.length > 0) message += `📤 <b>Total Payables:</b> -₹${totalPayables}\n`;
+    if (income.length > 0) message += `💚 <b>Total Income:</b> +₹${totalIncome}\n`;
+    if (expenses.length > 0) message += `❤️ <b>Total Expenses:</b> -₹${totalExpenses}\n`;
 
     return message;
 };
@@ -286,7 +352,7 @@ const getCategoryEmoji = (category) => {
         "Shopping & Entertainment": "🛍️",
         "Housing / Rent": "🏠",
         "Bills & Utilities": "📱",
-        "Personal & Transfers": "💸",
+        "Personal & Transfers": "🤝",
         "Miscellaneous": "📦",
         "Salary & Income": "💼",
         "Refunds & Returns": "↩️",

@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { redisClient } from "../index.js";
+import { redisClient } from "./redis.js";
 import { generateCSRFToken, revokeCSRFTOKEN } from "./csrfMiddleware.js";
 import crypto from "crypto";
 import dotenv from "dotenv";
