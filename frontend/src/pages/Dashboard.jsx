@@ -9,6 +9,7 @@ import CategoryPieChart from './components/Dashboard/CategoryPieChart';
 import RecentTransactions from './components/Dashboard/RecentTransactions';
 import AddTransactionModal from './components/Dashboard/AddTransactionModal';
 import TimeFilter from './components/Dashboard/TimeFilter';
+import PartyQuickView from './components/Dashboard/PartyQuickView';
 import { Plus } from 'lucide-react';
 
 const Dashboard = () => {
@@ -182,7 +183,7 @@ const Dashboard = () => {
                         Welcome back, <span className="text-[#4F9CF9]">Arnav</span>!
                     </h1>
                     <div className="flex items-center gap-3">
-                        <TimeFilter 
+                        <TimeFilter
                             selectedPeriod={period}
                             onPeriodChange={setPeriod}
                         />
@@ -220,6 +221,10 @@ const Dashboard = () => {
                         selectedView={selectedView}
                         onCategoryChange={setSelectedCategory}
                     />
+                </div>
+
+                <div className="mt-6">
+                    <PartyQuickView />
                 </div>
             </div>
 

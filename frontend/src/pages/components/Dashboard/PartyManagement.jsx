@@ -75,7 +75,7 @@ const PartyManagement = () => {
                     </div>
                     <div>
                         <h2 className="text-xl font-bold text-gray-800">Party / Khata</h2>
-                        <p className="text-sm text-gray-500 font-medium">Manage your contacts & balances</p>
+                        <p className="text-sm text-gray-500 font-bold">Manage your contacts & balances</p>
                     </div>
                 </div>
                 <button
@@ -95,7 +95,7 @@ const PartyManagement = () => {
                         placeholder="Search parties..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-medium text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-purple-300 focus:bg-white transition-all"
+                        className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-purple-300 focus:bg-white transition-all"
                     />
                 </div>
             </div>
@@ -110,7 +110,7 @@ const PartyManagement = () => {
                         <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Users size={32} className="text-gray-400" />
                         </div>
-                        <p className="text-gray-500 font-medium">
+                        <p className="text-gray-500 font-bold">
                             {searchQuery ? 'No parties found matching your search' : 'No parties yet'}
                         </p>
                         <p className="text-gray-400 text-sm mt-1">
@@ -160,7 +160,7 @@ const PartyManagement = () => {
                             <div className="bg-green-50 rounded-xl p-4">
                                 <div className="flex items-center gap-2 mb-2">
                                     <TrendingUp size={18} className="text-green-600" />
-                                    <span className="text-sm font-medium text-green-700">To Receive</span>
+                                    <span className="text-sm font-bold text-green-700">To Receive</span>
                                 </div>
                                 <p className="text-2xl font-bold text-green-600">
                                     {formatCurrency(
@@ -173,7 +173,7 @@ const PartyManagement = () => {
                             <div className="bg-red-50 rounded-xl p-4">
                                 <div className="flex items-center gap-2 mb-2">
                                     <TrendingDown size={18} className="text-red-600" />
-                                    <span className="text-sm font-medium text-red-700">To Give</span>
+                                    <span className="text-sm font-bold text-red-700">To Give</span>
                                 </div>
                                 <p className="text-2xl font-bold text-red-600">
                                     {formatCurrency(

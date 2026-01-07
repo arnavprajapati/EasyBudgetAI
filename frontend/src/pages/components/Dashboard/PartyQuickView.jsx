@@ -73,7 +73,6 @@ const PartyQuickView = () => {
     return (
         <>
             <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-2 border-dashed border-[#E0E0E0] p-6">
-                {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                         <div className="bg-purple-500 p-2.5 rounded-lg">
@@ -86,31 +85,29 @@ const PartyQuickView = () => {
                     </div>
                     <button
                         onClick={() => navigate('/settings')}
-                        className="flex items-center gap-1 text-purple-600 hover:text-purple-700 font-medium text-sm cursor-pointer transition-colors"
+                        className="flex items-center gap-1 text-purple-600 hover:text-purple-700 font-bold text-sm cursor-pointer transition-colors"
                     >
                         View All <ArrowRight size={16} />
                     </button>
                 </div>
 
-                {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
                     <div className="bg-green-50 rounded-xl p-4 border border-green-100">
                         <div className="flex items-center gap-2 mb-1">
                             <TrendingUp size={16} className="text-green-600" />
-                            <span className="text-xs font-medium text-green-700">To Receive</span>
+                            <span className="text-xs font-bold  font-bold text-green-700">To Receive</span>
                         </div>
                         <p className="text-2xl font-bold text-green-600">{formatCurrency(summary.toReceive)}</p>
                     </div>
                     <div className="bg-red-50 rounded-xl p-4 border border-red-100">
                         <div className="flex items-center gap-2 mb-1">
                             <TrendingDown size={16} className="text-red-600" />
-                            <span className="text-xs font-medium text-red-700">To Give</span>
+                            <span className="text-xs font-bold  font-bold text-red-700">To Give</span>
                         </div>
                         <p className="text-2xl font-bold text-red-600">{formatCurrency(summary.toGive)}</p>
                     </div>
                 </div>
 
-                {/* Party List */}
                 <div className="space-y-2">
                     {parties.slice(0, 5).map((party, index) => (
                         <div
@@ -124,12 +121,12 @@ const PartyQuickView = () => {
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-gray-800 text-sm">{party.name}</h3>
-                                    <p className="text-xs text-gray-400">{party.count} txn{party.count !== 1 ? 's' : ''}</p>
+                                    <p className="text-xs font-bold  text-gray-400">{party.count} txn{party.count !== 1 ? 's' : ''}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className={`font-bold text-sm ${getBalanceColor(party.balance)}`}>
-                                    {party.balance >= 0 ? '+' : ''}{formatCurrency(party.balance)}
+                                <span className={`font-bold text-sm ${getBalanceColor(party.netBalance)}`}>
+                                    {party.netBalance >= 0 ? '+' : ''}{formatCurrency(party.netBalance || 0)}
                                 </span>
                                 <ChevronRight size={16} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
                             </div>
@@ -137,15 +134,14 @@ const PartyQuickView = () => {
                     ))}
                 </div>
 
-                {/* Tip */}
                 <div className="mt-4 pt-4 border-t border-gray-100">
-                    <p className="text-xs text-gray-400 text-center">
-                        💡 Send via Telegram: "Rajesh ko 500 diye" or "Priya se 1000 liye"
+                    <p className="text-xs font-bold  text-gray-400 text-center">
+                        💡 Send transactions via Telegram: Simply message
+“Paid 500 to Rajesh” or “Received 1000 from Priya”
                     </p>
                 </div>
             </div>
 
-            {/* Party Detail Modal */}
             {showDetailModal && selectedParty && (
                 <PartyDetailModal
                     party={selectedParty}

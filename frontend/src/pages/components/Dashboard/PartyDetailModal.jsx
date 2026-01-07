@@ -26,10 +26,10 @@ const PartyDetailModal = ({ party, onClose }) => {
     const fetchPartyTransactions = async (page) => {
         try {
             setLoading(true);
-            const { data } = await api.get(`/api/v1/expense/parties/${encodeURIComponent(party.name)}/transactions?page=${page}&limit=10`);
+            const { data } = await api.get(`/api/v1/expense/parties/${encodeURIComponent(party.name)}`);
             setTransactions(data.transactions || []);
-            setSummary(data.summary || { totalGiven: 0, totalReceived: 0, balance: 0 });
-            setPagination(data.pagination || { page: 1, pages: 1, total: 0 });
+            setSummary(data.summary || { toReceive: 0, toGive: 0, netBalance: 0 });
+            setPagination({ page: 1, pages: 1, total: data.summary?.transactionCount || 0 });
         } catch (error) {
             toast.error('Failed to load transactions');
             console.error(error);
@@ -96,10 +96,10 @@ const PartyDetailModal = ({ party, onClose }) => {
                         </button>
                     </div>
 
-                    <div className={`rounded-xl p-4 ${getBalanceColor(summary.balance)}`}>
-                        <p className="text-sm font-medium opacity-80">{getBalanceText(summary.balance)}</p>
+                    <div className={`rounded-xl p-4 ${getBalanceColor(summary.netBalance)}`}>
+                        <p className="text-sm font-bold opacity-80">{getBalanceText(summary.netBalance)}</p>
                         <p className="text-3xl font-bold mt-1">
-                            {formatCurrency(Math.abs(summary.balance))}
+                            {formatCurrency(Math.abs(summary.netBalance || 0))}
                         </p>
                     </div>
 
@@ -107,14 +107,14 @@ const PartyDetailModal = ({ party, onClose }) => {
                         <div className="bg-green-50 rounded-xl p-4 border border-green-200">
                             <div className="flex items-center gap-2 mb-1">
                                 <TrendingUp size={18} className="text-green-600" />
-                                <span className="text-sm font-medium text-green-700">To Receive</span>
+                                <span className="text-sm font-bold text-green-700">To Receive</span>
                             </div>
                             <p className="text-2xl font-bold text-green-600">{formatCurrency(summary.toReceive || 0)}</p>
                         </div>
                         <div className="bg-red-50 rounded-xl p-4 border border-red-200">
                             <div className="flex items-center gap-2 mb-1">
                                 <TrendingDown size={18} className="text-red-600" />
-                                <span className="text-sm font-medium text-red-700">To Give</span>
+                                <span className="text-sm font-bold text-red-700">To Give</span>
                             </div>
                             <p className="text-2xl font-bold text-red-600">{formatCurrency(summary.toGive || 0)}</p>
                         </div>
@@ -135,14 +135,9 @@ const PartyDetailModal = ({ party, onClose }) => {
                     ) : (
                         <div className="space-y-3">
                             {transactions.map((txn, index) => {
-                                // Determine if this is a "to receive" pending (should be positive/green)
                                 const isPendingToReceive = txn.description?.toLowerCase().includes('to receive');
 
-                                // Display logic:
-                                // - Credit (received) = Green (+)
-                                // - Pending to receive = Green (+) - they owe us
-                                // - Debit (gave) = Red (-)
-                                // - Pending to pay = Red (-) - we owe them
+
                                 const isPositive = txn.type === 'credit' || isPendingToReceive;
 
                                 return (
@@ -159,15 +154,15 @@ const PartyDetailModal = ({ party, onClose }) => {
                                                 )}
                                             </div>
                                             <div>
-                                                <p className="font-medium text-gray-800 text-sm">{txn.description}</p>
+                                                <p className="font-bold text-gray-800 text-sm">{txn.description}</p>
                                                 <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
                                                     <Calendar size={12} />
-                                                    <span>{formatDate(txn.date)} • {formatTime(txn.date)}</span>
+                                                    <span className='text-xs font-bold'>{formatDate(txn.date)} • {formatTime(txn.date)}</span>
                                                     {txn.source === 'telegram' && (
                                                         <>
                                                             <span>•</span>
                                                             <MessageSquare size={12} />
-                                                            <span>Telegram</span>
+                                                            <span className='text-xs font-bold'>Telegram</span>
                                                         </>
                                                     )}
                                                 </div>
@@ -191,7 +186,7 @@ const PartyDetailModal = ({ party, onClose }) => {
                             >
                                 <ChevronLeft size={20} className="text-gray-600" />
                             </button>
-                            <span className="text-sm font-medium text-gray-600">
+                            <span className="text-sm font-bold text-gray-600">
                                 Page {pagination.page} of {pagination.pages}
                             </span>
                             <button
@@ -206,8 +201,9 @@ const PartyDetailModal = ({ party, onClose }) => {
                 </div>
 
                 <div className="p-4 border-t border-gray-100 bg-gray-50">
-                    <p className="text-xs text-gray-400 text-center">
-                        💡 Tip: Send transactions via Telegram like "{party.name} ko 500 diye" or "{party.name} se 1000 liye"
+                    <p className="text-xs font-bold text-gray-400 text-center">
+                        💡 Tip: You can quickly add transactions through Telegram by sending messages like
+                        “Paid 500 to {party.name}” or “Received 1000 from {party.name}.”"
                     </p>
                 </div>
             </div>
