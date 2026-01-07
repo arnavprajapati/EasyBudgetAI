@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { saveExpensesFromTelegram } from "./controllers/expense.js";
 import { verifyTelegramOTPFromBot } from "./controllers/telegram.js";
 import { formatExpenseResponse } from "./config/expenseParser.js";
+import { storeTelegramChatId } from "./config/telegramHelper.js";
 
 dotenv.config();
 
@@ -16,11 +17,15 @@ if (!BOT_TOKEN) {
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: false });
 
-
 const handleStart = async (msg) => {
     const chatId = msg.chat.id;
     const telegramUserId = msg.from.id.toString();
     const telegramUsername = msg.from.username;
+
+    // Store chatId for proactive OTP sending
+    if (telegramUsername) {
+        await storeTelegramChatId(telegramUsername, chatId);
+    }
 
     try {
         const { User } = await import("./models/User.js");
@@ -397,7 +402,7 @@ const handleCallbackQuery = async (callbackQuery) => {
         let selectedParty = null;
 
         const [action, indexStr, ...valueParts] = data.split(':');
-        const value = valueParts.join(':'); 
+        const value = valueParts.join(':');
 
         if (action === 'party_select') {
             selectedParty = value;
@@ -685,6 +690,7 @@ const handleBalance = async (msg) => {
 
 bot.on("message", async (msg) => {
     const messageText = msg.text;
+    console.log(`📩 Received message from @${msg.from?.username}: ${messageText}`);
     if (!messageText) return;
 
     if (messageText.startsWith("/start")) return handleStart(msg);

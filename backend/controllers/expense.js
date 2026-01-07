@@ -289,7 +289,7 @@ export const deleteExpense = TryCatch(async (req, res) => {
 
 export const parseExpenseText = TryCatch(async (req, res) => {
     const { text } = req.body;
-    const userId = req.user?._id?.toString() || req.ip; 
+    const userId = req.user?._id?.toString() || req.ip;
 
     if (!text || typeof text !== "string") {
         return res.status(400).json({
@@ -432,12 +432,10 @@ export const getParties = TryCatch(async (req, res) => {
             existing.count++;
             existing.lastActivity = Math.max(existing.lastActivity, new Date(txn.date).getTime());
 
-            if (isToReceive) {
+            if (isToReceive || isGiven) {
                 existing.toReceive += txn.amount;
-            } else if (isToPay) {
+            } else if (isToPay || isReceived) {
                 existing.toGive += txn.amount;
-            } else if (isGiven) {
-            } else if (isReceived) {
             }
 
             existing.transactions.push(txn);
@@ -460,6 +458,7 @@ export const getParties = TryCatch(async (req, res) => {
             lastActivity: party.lastActivity,
             toReceive: party.toReceive,
             toGive: party.toGive,
+            netBalance: party.toReceive - party.toGive,
         }))
         .sort((a, b) => b.lastActivity - a.lastActivity);
 

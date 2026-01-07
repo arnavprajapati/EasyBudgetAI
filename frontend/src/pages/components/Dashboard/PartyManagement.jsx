@@ -132,7 +132,7 @@ const PartyManagement = () => {
 
                                     <div>
                                         <h3 className="font-bold text-gray-800">{party.name}</h3>
-                                        <p className="text-sm text-gray-500">
+                                        <p className="text-sm text-gray-500 font-bold">
                                             {party.count} transaction{party.count !== 1 ? 's' : ''} • Last: {formatDate(party.lastActivity)}
                                         </p>
                                     </div>
@@ -140,11 +140,11 @@ const PartyManagement = () => {
 
                                 <div className="flex items-center gap-3">
                                     <div className="text-right">
-                                        <p className={`font-bold ${getBalanceColor(party.balance)}`}>
-                                            {formatCurrency(Math.abs(party.balance))}
+                                        <p className={`font-bold ${getBalanceColor(party.netBalance)}`}>
+                                            {formatCurrency(Math.abs(party.netBalance || 0))}
                                         </p>
                                         <p className="text-xs text-gray-400 capitalize">
-                                            {getBalanceLabel(party.balance)}
+                                            {getBalanceLabel(party.netBalance)}
                                         </p>
                                     </div>
                                     <ChevronRight size={20} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
@@ -164,9 +164,7 @@ const PartyManagement = () => {
                                 </div>
                                 <p className="text-2xl font-bold text-green-600">
                                     {formatCurrency(
-                                        filteredParties
-                                            .filter(p => p.balance > 0)
-                                            .reduce((sum, p) => sum + p.balance, 0)
+                                        filteredParties.reduce((sum, p) => sum + (p.toReceive || 0), 0)
                                     )}
                                 </p>
                             </div>
@@ -177,9 +175,7 @@ const PartyManagement = () => {
                                 </div>
                                 <p className="text-2xl font-bold text-red-600">
                                     {formatCurrency(
-                                        Math.abs(filteredParties
-                                            .filter(p => p.balance < 0)
-                                            .reduce((sum, p) => sum + p.balance, 0))
+                                        filteredParties.reduce((sum, p) => sum + (p.toGive || 0), 0)
                                     )}
                                 </p>
                             </div>

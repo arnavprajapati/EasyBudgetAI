@@ -85,7 +85,7 @@ const PartyDetailModal = ({ party, onClose }) => {
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-gray-800">{party.name}</h2>
-                                <p className="text-sm text-gray-500">{pagination.total} transaction{pagination.total !== 1 ? 's' : ''}</p>
+                                <p className="text-sm font-bold text-gray-500">{pagination.total} transaction{pagination.total !== 1 ? 's' : ''}</p>
                             </div>
                         </div>
                         <button

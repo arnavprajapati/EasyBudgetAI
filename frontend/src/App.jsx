@@ -13,6 +13,7 @@ import Verify from "./pages/auth/Verify";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import Settings from "./pages/Settings";
+import Party from "./pages/Party";
 import Loading from "./Loding";
 import { fetchUser } from "./redux/slices/authSlice";
 import Dashboard from "./pages/Dashboard";
@@ -68,6 +69,10 @@ const AppContent = () => {
         {
           path: "/settings",
           element: isAuth ? <Settings /> : <Navigate to="/login" replace />
+        },
+        {
+          path: "/party",
+          element: isAuth ? <Party /> : <Navigate to="/login" replace />
         }
       ]
     }
