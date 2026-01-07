@@ -1,8 +1,223 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
+import { redisClient } from "./redis.js";
+import crypto from "crypto";
+
 dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+const RATE_LIMIT_CONFIG = {
+    userRequests: {
+        maxRequests: 30,     
+        windowSeconds: 60,      
+    },
+    globalRequests: {
+        maxRequests: 200,       
+        windowSeconds: 60,      
+    },
+    burstProtection: {
+        maxRequests: 5,         
+        windowSeconds: 10,     
+    },
+    deduplication: {
+        windowSeconds: 5,       
+    },
+    cooldownSeconds: 30,
+};
+
+
+const generateRequestHash = (userId, messageText) => {
+    const content = `${userId}:${messageText.toLowerCase().trim()}`;
+    return crypto.createHash('md5').update(content).digest('hex');
+};
+
+
+const isDuplicateRequest = async (userId, messageText) => {
+    try {
+        const hash = generateRequestHash(userId, messageText);
+        const key = `gemini:dedup:${hash}`;
+
+        const exists = await redisClient.get(key);
+        if (exists) {
+            console.log(`🔄 Duplicate request detected for user ${userId}`);
+            return { isDuplicate: true, cachedResult: JSON.parse(exists) };
+        }
+
+        return { isDuplicate: false };
+    } catch (error) {
+        console.error("Deduplication check error:", error);
+        return { isDuplicate: false };
+    }
+};
+
+const cacheRequestResult = async (userId, messageText, result) => {
+    try {
+        const hash = generateRequestHash(userId, messageText);
+        const key = `gemini:dedup:${hash}`;
+
+        await redisClient.setEx(
+            key,
+            RATE_LIMIT_CONFIG.deduplication.windowSeconds,
+            JSON.stringify(result)
+        );
+    } catch (error) {
+        console.error("Result caching error:", error);
+    }
+};
+
+const checkRateLimit = async (key, maxRequests, windowSeconds) => {
+    try {
+        const current = await redisClient.incr(key);
+
+        if (current === 1) {
+            await redisClient.expire(key, windowSeconds);
+        }
+
+        const ttl = await redisClient.ttl(key);
+
+        return {
+            allowed: current <= maxRequests,
+            current,
+            limit: maxRequests,
+            remaining: Math.max(0, maxRequests - current),
+            resetIn: ttl > 0 ? ttl : windowSeconds,
+        };
+    } catch (error) {
+        console.error("Rate limit check error:", error);
+        return { allowed: true, current: 0, limit: maxRequests, remaining: maxRequests, resetIn: 0 };
+    }
+};
+
+
+const isInCooldown = async (userId) => {
+    try {
+        const key = `gemini:cooldown:${userId}`;
+        const cooldown = await redisClient.get(key);
+
+        if (cooldown) {
+            const ttl = await redisClient.ttl(key);
+            return { inCooldown: true, remainingSeconds: ttl };
+        }
+
+        return { inCooldown: false };
+    } catch (error) {
+        console.error("Cooldown check error:", error);
+        return { inCooldown: false };
+    }
+};
+
+
+const setCooldown = async (userId) => {
+    try {
+        const key = `gemini:cooldown:${userId}`;
+        await redisClient.setEx(key, RATE_LIMIT_CONFIG.cooldownSeconds, "1");
+    } catch (error) {
+        console.error("Set cooldown error:", error);
+    }
+};
+
+
+const checkAllRateLimits = async (userId) => {
+    const cooldown = await isInCooldown(userId);
+    if (cooldown.inCooldown) {
+        return {
+            allowed: false,
+            reason: "cooldown",
+            message: `⏳ Please wait ${cooldown.remainingSeconds}s before sending more messages.`,
+            retryAfter: cooldown.remainingSeconds,
+        };
+    }
+
+    const burstKey = `gemini:burst:${userId}`;
+    const burstLimit = await checkRateLimit(
+        burstKey,
+        RATE_LIMIT_CONFIG.burstProtection.maxRequests,
+        RATE_LIMIT_CONFIG.burstProtection.windowSeconds
+    );
+
+    if (!burstLimit.allowed) {
+        await setCooldown(userId);
+        return {
+            allowed: false,
+            reason: "burst",
+            message: `⚡ Too many messages too fast! Please wait ${burstLimit.resetIn}s.`,
+            retryAfter: burstLimit.resetIn,
+        };
+    }
+
+    const userKey = `gemini:user:${userId}`;
+    const userLimit = await checkRateLimit(
+        userKey,
+        RATE_LIMIT_CONFIG.userRequests.maxRequests,
+        RATE_LIMIT_CONFIG.userRequests.windowSeconds
+    );
+
+    if (!userLimit.allowed) {
+        await setCooldown(userId);
+        return {
+            allowed: false,
+            reason: "user_limit",
+            message: `🚫 Rate limit reached (${userLimit.limit}/min). Please wait ${userLimit.resetIn}s.`,
+            retryAfter: userLimit.resetIn,
+        };
+    }
+
+    const globalKey = "gemini:global";
+    const globalLimit = await checkRateLimit(
+        globalKey,
+        RATE_LIMIT_CONFIG.globalRequests.maxRequests,
+        RATE_LIMIT_CONFIG.globalRequests.windowSeconds
+    );
+
+    if (!globalLimit.allowed) {
+        return {
+            allowed: false,
+            reason: "global_limit",
+            message: "🔥 Server is busy. Please try again in a few seconds.",
+            retryAfter: globalLimit.resetIn,
+        };
+    }
+
+    return {
+        allowed: true,
+        remaining: {
+            user: userLimit.remaining,
+            global: globalLimit.remaining,
+        },
+    };
+};
+
+/**
+ * Get rate limit stats for monitoring
+ */
+export const getRateLimitStats = async (userId = null) => {
+    try {
+        const stats = {
+            global: {
+                current: parseInt(await redisClient.get("gemini:global") || "0"),
+                limit: RATE_LIMIT_CONFIG.globalRequests.maxRequests,
+            },
+        };
+
+        if (userId) {
+            stats.user = {
+                current: parseInt(await redisClient.get(`gemini:user:${userId}`) || "0"),
+                limit: RATE_LIMIT_CONFIG.userRequests.maxRequests,
+                burst: parseInt(await redisClient.get(`gemini:burst:${userId}`) || "0"),
+            };
+
+            const cooldown = await isInCooldown(userId);
+            stats.user.inCooldown = cooldown.inCooldown;
+            stats.user.cooldownRemaining = cooldown.remainingSeconds || 0;
+        }
+
+        return stats;
+    } catch (error) {
+        console.error("Get rate limit stats error:", error);
+        return null;
+    }
+};
 
 const SYSTEM_PROMPT = `You are a smart financial assistant for SmartKhata - an Indian expense & khata tracking app.
 
@@ -108,9 +323,29 @@ REMEMBER: You are UNDERSTANDING language, not matching keywords. A human reading
 
 If no valid transaction (no amount found), return: {"transactions": []}`;
 
-export const parseExpenses = async (messageText) => {
+export const parseExpenses = async (messageText, userId = null) => {
     if (!messageText || typeof messageText !== "string" || messageText.trim().length === 0) {
         return { date: new Date().toISOString().split("T")[0], transactions: [] };
+    }
+
+    if (userId) {
+        const dupCheck = await isDuplicateRequest(userId, messageText);
+        if (dupCheck.isDuplicate && dupCheck.cachedResult) {
+            console.log(`✅ Returning cached result for user ${userId}`);
+            return dupCheck.cachedResult;
+        }
+
+        const rateLimitCheck = await checkAllRateLimits(userId);
+        if (!rateLimitCheck.allowed) {
+            console.log(`🚫 Rate limit hit for user ${userId}: ${rateLimitCheck.reason}`);
+            return {
+                date: new Date().toISOString().split("T")[0],
+                transactions: [],
+                rateLimited: true,
+                rateLimitMessage: rateLimitCheck.message,
+                retryAfter: rateLimitCheck.retryAfter,
+            };
+        }
     }
 
     try {
@@ -185,10 +420,16 @@ Remember: Return ONLY valid JSON with "transactions" array, nothing else.`;
                 };
             });
 
-        return {
+        const finalResult = {
             date: new Date().toISOString().split("T")[0],
             transactions: validTransactions,
         };
+
+        if (userId) {
+            await cacheRequestResult(userId, messageText, finalResult);
+        }
+
+        return finalResult;
     } catch (error) {
         console.error("Gemini parsing error:", error.message);
 
@@ -274,10 +515,10 @@ export const formatExpenseResponse = (parsedData) => {
         return null;
     }
 
-    const expenses = [];      
-    const income = [];         
-    const receivables = [];   
-    const payables = [];       
+    const expenses = [];
+    const income = [];
+    const receivables = [];
+    const payables = [];
 
     for (const t of transactions) {
         const desc = t.description?.toLowerCase() || '';

@@ -1,13 +1,9 @@
 import TryCatch from "../middlewares/TryCatch.js";
 import { TelegramOTP } from "../models/TelegramOTP.js";
 import { User } from "../models/User.js";
+import { sendOTPToTelegram } from "../config/telegramHelper.js";
 
-/**
- * Generate a 6-digit OTP for Telegram linking
- * POST /api/v1/telegram/generate-otp
- * Requires authentication
- * Body: { telegramUsername: string }
- */
+
 export const generateTelegramOTP = TryCatch(async (req, res) => {
     const userId = req.user._id;
     const { telegramUsername } = req.body;
@@ -35,11 +31,11 @@ export const generateTelegramOTP = TryCatch(async (req, res) => {
         });
     }
 
-    const existingUser = await User.findOne({ 
+    const existingUser = await User.findOne({
         telegramUsername: cleanUsername,
         telegramUserId: { $ne: null }
     });
-    
+
     if (existingUser) {
         return res.status(400).json({
             message: "This Telegram username is already linked to another account",
@@ -60,8 +56,26 @@ export const generateTelegramOTP = TryCatch(async (req, res) => {
         used: false,
     });
 
+    let otpSentToTelegram = false;
+    let needsToStartBot = false;
+    try {
+        const sendResult = await sendOTPToTelegram(cleanUsername, otp, expiresAt);
+        otpSentToTelegram = sendResult.success;
+        if (sendResult.reason === "no_chat_id") {
+            needsToStartBot = true;
+        }
+    } catch (error) {
+        console.error("Failed to send OTP to Telegram:", error);
+    }
+
     res.json({
-        message: "OTP generated successfully. Please send /start to the bot to receive your OTP.",
+        message: otpSentToTelegram
+            ? "OTP sent to your Telegram! Check your chat with the bot."
+            : needsToStartBot
+                ? "Please send /start to the bot first, then click 'Generate OTP' again."
+                : "OTP generated! Please send /start to the bot to receive your OTP.",
+        otpSentToTelegram,
+        needsToStartBot,
         botUsername: process.env.TELEGRAM_BOT_USERNAME || "@smart_khata_bot",
         telegramUsername: cleanUsername,
         expiresAt,
@@ -111,11 +125,11 @@ export const verifyOTPFromWebsite = TryCatch(async (req, res) => {
         });
     }
 
-    const existingUser = await User.findOne({ 
+    const existingUser = await User.findOne({
         telegramUsername: otpRecord.telegramUsername,
         telegramUserId: { $ne: null }
     });
-    
+
     if (existingUser) {
         return res.status(400).json({
             message: "This Telegram username is already linked to another account",

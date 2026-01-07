@@ -80,11 +80,11 @@ const PartyQuickView = () => {
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-[#212529]">Party / Khata</h2>
-                            <p className="text-sm text-gray-500">Your contacts & balances</p>
+                            <p className="text-sm font-bold text-gray-500">Your contacts & balances</p>
                         </div>
                     </div>
                     <button
-                        onClick={() => navigate('/settings')}
+                        onClick={() => navigate('/party')}
                         className="flex items-center gap-1 text-purple-600 hover:text-purple-700 font-bold text-sm cursor-pointer transition-colors"
                     >
                         View All <ArrowRight size={16} />
@@ -137,7 +137,7 @@ const PartyQuickView = () => {
                 <div className="mt-4 pt-4 border-t border-gray-100">
                     <p className="text-xs font-bold  text-gray-400 text-center">
                         💡 Send transactions via Telegram: Simply message
-“Paid 500 to Rajesh” or “Received 1000 from Priya”
+                        “Paid 500 to Rajesh” or “Received 1000 from Priya”
                     </p>
                 </div>
             </div>

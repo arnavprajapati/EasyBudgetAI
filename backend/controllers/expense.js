@@ -289,6 +289,7 @@ export const deleteExpense = TryCatch(async (req, res) => {
 
 export const parseExpenseText = TryCatch(async (req, res) => {
     const { text } = req.body;
+    const userId = req.user?._id?.toString() || req.ip;
 
     if (!text || typeof text !== "string") {
         return res.status(400).json({
@@ -296,7 +297,15 @@ export const parseExpenseText = TryCatch(async (req, res) => {
         });
     }
 
-    const parsed = await parseExpenses(text);
+    const parsed = await parseExpenses(text, userId);
+
+    if (parsed.rateLimited) {
+        return res.status(429).json({
+            message: parsed.rateLimitMessage,
+            rateLimited: true,
+            retryAfter: parsed.retryAfter,
+        });
+    }
 
     res.json({
         message: "Text parsed successfully",
@@ -317,7 +326,16 @@ export const saveExpensesFromTelegram = async (telegramUserId, messageText, opti
             };
         }
 
-        const parsed = await parseExpenses(messageText);
+        const parsed = await parseExpenses(messageText, telegramUserId);
+
+        if (parsed.rateLimited) {
+            return {
+                success: false,
+                message: parsed.rateLimitMessage,
+                rateLimited: true,
+                retryAfter: parsed.retryAfter,
+            };
+        }
 
         if (!parsed.transactions || parsed.transactions.length === 0) {
             return {
@@ -326,7 +344,6 @@ export const saveExpensesFromTelegram = async (telegramUserId, messageText, opti
             };
         }
 
-        // Check if party clarification is needed (only if checkParty is enabled)
         if (checkParty) {
             const { needsPartyClarification } = await import("../config/partyMatcher.js");
             for (let i = 0; i < parsed.transactions.length; i++) {
@@ -350,7 +367,6 @@ export const saveExpensesFromTelegram = async (telegramUserId, messageText, opti
         }
 
         const expensesToCreate = parsed.transactions.map((txn) => {
-            // Check if this is a pending transaction (lena hai / dena hai)
             const isPending = txn.description?.toLowerCase().includes('pending:') ||
                 txn.description?.toLowerCase().includes('to receive') ||
                 txn.description?.toLowerCase().includes('to pay');
@@ -385,17 +401,14 @@ export const saveExpensesFromTelegram = async (telegramUserId, messageText, opti
     }
 };
 
-// Get all parties (khata) for a user with balance summary
 export const getParties = TryCatch(async (req, res) => {
     const userId = req.user._id;
 
-    // Get all transactions with party names
     const transactions = await Expense.find({
         userId,
         partyName: { $ne: null, $exists: true }
     }).sort({ date: -1 }).lean();
 
-    // Group by party and calculate balances
     const partyMap = new Map();
 
     for (const txn of transactions) {
@@ -405,19 +418,11 @@ export const getParties = TryCatch(async (req, res) => {
         const key = partyName.toLowerCase();
         const existing = partyMap.get(key);
 
-        // Calculate khata logic:
-        // "maine diya" / "given" = they owe me (To Receive)
-        // "maine liya" / "received" = I owe them (To Give)  
-        // "lena hai" / "to receive" = pending receivable
-        // "dena hai" / "to pay" = pending payable
 
         const descLower = txn.description?.toLowerCase() || '';
         const isToReceive = txn.isPending && descLower.includes('to receive');
         const isToPay = txn.isPending && descLower.includes('to pay');
 
-        // For completed transactions:
-        // If I gave money (debit to Personal), they owe me
-        // If I received money (credit from Others), I owe them
         const isGiven = !txn.isPending && txn.type === 'debit' &&
             (txn.category === 'Personal & Transfers');
         const isReceived = !txn.isPending && txn.type === 'credit' &&
@@ -427,14 +432,10 @@ export const getParties = TryCatch(async (req, res) => {
             existing.count++;
             existing.lastActivity = Math.max(existing.lastActivity, new Date(txn.date).getTime());
 
-            if (isToReceive) {
+            if (isToReceive || isGiven) {
                 existing.toReceive += txn.amount;
-            } else if (isToPay) {
+            } else if (isToPay || isReceived) {
                 existing.toGive += txn.amount;
-            } else if (isGiven) {
-                existing.toReceive += txn.amount; // They owe me
-            } else if (isReceived) {
-                existing.toGive += txn.amount; // I owe them
             }
 
             existing.transactions.push(txn);
@@ -450,7 +451,6 @@ export const getParties = TryCatch(async (req, res) => {
         }
     }
 
-    // Convert to array and calculate net balance
     const parties = Array.from(partyMap.values())
         .map(party => ({
             name: party.name,
@@ -458,7 +458,7 @@ export const getParties = TryCatch(async (req, res) => {
             lastActivity: party.lastActivity,
             toReceive: party.toReceive,
             toGive: party.toGive,
-            netBalance: party.toReceive - party.toGive, // Positive = they owe me
+            netBalance: party.toReceive - party.toGive,
         }))
         .sort((a, b) => b.lastActivity - a.lastActivity);
 
@@ -473,7 +473,6 @@ export const getParties = TryCatch(async (req, res) => {
     });
 });
 
-// Get all transactions for a specific party
 export const getPartyTransactions = TryCatch(async (req, res) => {
     const userId = req.user._id;
     const { partyName } = req.params;
@@ -490,7 +489,6 @@ export const getPartyTransactions = TryCatch(async (req, res) => {
         partyName: { $regex: new RegExp(`^${partyName}$`, 'i') }
     }).sort({ date: -1 }).lean();
 
-    // Calculate running balance
     let toReceive = 0;
     let toGive = 0;
 

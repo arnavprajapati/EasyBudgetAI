@@ -9,8 +9,7 @@ import CategoryPieChart from './components/Dashboard/CategoryPieChart';
 import RecentTransactions from './components/Dashboard/RecentTransactions';
 import AddTransactionModal from './components/Dashboard/AddTransactionModal';
 import TimeFilter from './components/Dashboard/TimeFilter';
-import PartyQuickView from './components/Dashboard/PartyQuickView';
-import { Plus } from 'lucide-react';
+import { Plus, BookOpen } from 'lucide-react';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -188,6 +187,13 @@ const Dashboard = () => {
                             onPeriodChange={setPeriod}
                         />
                         <button
+                            onClick={() => navigate('/party')}
+                            className="flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-700 transition-all text-sm shadow-lg cursor-pointer"
+                        >
+                            <BookOpen size={20} />
+                            Khata Book
+                        </button>
+                        <button
                             onClick={() => setShowAddModal(true)}
                             className="flex items-center gap-2 bg-[#1E1E1E] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#000000] transition-all text-sm shadow-lg cursor-pointer"
                         >
@@ -221,10 +227,6 @@ const Dashboard = () => {
                         selectedView={selectedView}
                         onCategoryChange={setSelectedCategory}
                     />
-                </div>
-
-                <div className="mt-6">
-                    <PartyQuickView />
                 </div>
             </div>
 
