@@ -328,6 +328,11 @@ const handleExpenseMessage = async (msg) => {
 
         const result = await saveExpensesFromTelegram(telegramUserId, messageText, { checkParty: true });
 
+        if (result.rateLimited) {
+            await bot.sendMessage(chatId, result.message, { parse_mode: "HTML" });
+            return;
+        }
+
         if (!result.success && !result.message && !result.needsClarification) {
             return;
         }
@@ -392,7 +397,7 @@ const handleCallbackQuery = async (callbackQuery) => {
         let selectedParty = null;
 
         const [action, indexStr, ...valueParts] = data.split(':');
-        const value = valueParts.join(':'); // Rejoin in case party name has colons
+        const value = valueParts.join(':'); 
 
         if (action === 'party_select') {
             selectedParty = value;
