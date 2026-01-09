@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import api from '../apiIntercepter';
 import { toast } from 'react-toastify';
 
@@ -13,6 +14,7 @@ import { Plus, BookOpen } from 'lucide-react';
 
 const Dashboard = () => {
     const navigate = useNavigate();
+    const { user } = useSelector((state) => state.auth);
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState('month');
     const [summary, setSummary] = useState(null);
@@ -179,7 +181,7 @@ const Dashboard = () => {
 
                 <div className="mb-8 flex items-center justify-between">
                     <h1 className="text-5xl font-bold text-[#212529]">
-                        Welcome back, <span className="text-[#4F9CF9]">Arnav</span>!
+                        Welcome back, <span className="text-[#4F9CF9]">{user?.name?.split(' ')[0] || 'User'}</span>!
                     </h1>
                     <div className="flex items-center gap-3">
                         <TimeFilter
