@@ -1,27 +1,27 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
 import { redisClient } from "./redis.js";
 import crypto from "crypto";
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "google/gemini-2.0-flash-001";
 
 const RATE_LIMIT_CONFIG = {
     userRequests: {
-        maxRequests: 30,     
-        windowSeconds: 60,      
+        maxRequests: 30,
+        windowSeconds: 60,
     },
     globalRequests: {
-        maxRequests: 200,       
-        windowSeconds: 60,      
+        maxRequests: 200,
+        windowSeconds: 60,
     },
     burstProtection: {
-        maxRequests: 5,         
-        windowSeconds: 10,     
+        maxRequests: 5,
+        windowSeconds: 10,
     },
     deduplication: {
-        windowSeconds: 5,       
+        windowSeconds: 5,
     },
     cooldownSeconds: 30,
 };
@@ -305,12 +305,36 @@ For CREDIT:
 - Refunds & Returns (refund, cashback, return amount)
 - Received from Others (borrowed, someone paid back, gift received, dues/receivables)
 
+⚠️ IMPORTANT - DESCRIPTION MUST BE IN CLEAN ENGLISH:
+Users write in many languages (Hindi, Hinglish, regional languages, etc.) but you MUST ALWAYS convert the description to clean, professional English.
+
+Examples:
+- "70 ka dosa khaya" → description: "Dosa" or "Had dosa"
+- "chai piyi 30 rs" → description: "Tea"
+- "auto se ghar aaya 50" → description: "Auto ride home"
+- "Rajesh ko 500 diye udhar" → description: "Lent money to Rajesh"
+- "salary aa gayi" → description: "Salary received"
+- "phone ka recharge kiya" → description: "Mobile recharge"
+- "Netflix ka subscription liya" → description: "Netflix subscription"
+- "bhai ki shadi mein gift diya" → description: "Wedding gift"
+- "dawai kharidi" → description: "Medicine purchase"
+- "kapde kharide 2000 ke" → description: "Clothes shopping"
+- "ghar ka kiraya diya" → description: "House rent"
+- "bijli ka bill bhara" → description: "Electricity bill"
+
+Keep descriptions:
+✓ Short (2-4 words ideal)
+✓ Clear and professional
+✓ In proper English only
+✓ No Hinglish or regional words
+✓ Universally understandable
+
 OUTPUT FORMAT (STRICT JSON ONLY):
 {
     "transactions": [
         {
             "amount": <number>,
-            "description": "<clean readable description>",
+            "description": "<SHORT ENGLISH description - NO Hinglish>",
             "category": "<exact category from list>",
             "type": "debit" | "credit",
             "partyName": "<party name or null>",
@@ -319,7 +343,9 @@ OUTPUT FORMAT (STRICT JSON ONLY):
     ]
 }
 
-REMEMBER: You are UNDERSTANDING language, not matching keywords. A human reading "Raj ne 500 de diye" knows Raj gave money TO the writer. You should understand the same way.
+REMEMBER: 
+1. You are UNDERSTANDING language, not matching keywords. A human reading "Raj ne 500 de diye" knows Raj gave money TO the writer. You should understand the same way.
+2. ALWAYS write description in clean English regardless of input language.
 
 If no valid transaction (no amount found), return: {"transactions": []}`;
 
@@ -349,25 +375,46 @@ export const parseExpenses = async (messageText, userId = null) => {
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": process.env.SITE_URL || "https://smartkhata.me",
+                "X-Title": "SmartKhata"
+            },
+            body: JSON.stringify({
+                model: OPENROUTER_MODEL,
+                messages: [
+                    {
+                        role: "system",
+                        content: SYSTEM_PROMPT
+                    },
+                    {
+                        role: "user",
+                        content: `${messageText}\n\nRemember: Return ONLY valid JSON with "transactions" array, nothing else.`
+                    }
+                ],
+                temperature: 0.1,
+                max_tokens: 1000
+            })
+        });
 
-        const prompt = `${SYSTEM_PROMPT}
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error("OpenRouter API error:", response.status, errorData);
+            return fallbackParser(messageText);
+        }
 
-User Input:
-${messageText}
-
-Remember: Return ONLY valid JSON with "transactions" array, nothing else.`;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let text = response.text().trim();
+        const data = await response.json();
+        let text = data.choices?.[0]?.message?.content?.trim() || "";
 
         text = text.replace(/```json\n?/gi, "").replace(/```\n?/gi, "").trim();
 
         const parsed = JSON.parse(text);
 
         if (!parsed.transactions || !Array.isArray(parsed.transactions)) {
-            console.error("Invalid Gemini response structure:", text);
+            console.error("Invalid OpenRouter response structure:", text);
             return { date: new Date().toISOString().split("T")[0], transactions: [] };
         }
 
