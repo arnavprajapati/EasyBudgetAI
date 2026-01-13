@@ -1,9 +1,8 @@
-module.exports = {
+export default {
     apps: [
         {
             name: "smartkhata-backend",
             script: "index.js",
-            cwd: "./backend",
             env: {
                 APP_MODE: "backend"
             },
@@ -13,7 +12,6 @@ module.exports = {
         {
             name: "smartkhata-telegram-bot",
             script: "index.js",
-            cwd: "./backend",
             env: {
                 APP_MODE: "telegram-bot"
             },
