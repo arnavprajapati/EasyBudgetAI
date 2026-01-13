@@ -15,11 +15,11 @@ const isTelegramBotMode = process.env.APP_MODE === 'telegram-bot';
 if (isTelegramBotMode) {
   console.log("🤖 APP_MODE=telegram-bot detected");
   console.log("🔄 Starting Telegram Bot Service...");
-  
+
   const { startBotService } = await import("./Telegrambot.js");
   await startBotService();
-  
-  
+
+
 } else {
   await connectDb();
   await connectRedis();
@@ -52,7 +52,7 @@ if (isTelegramBotMode) {
     optionsSuccessStatus: 204
   }));
 
-  app.get("/health", (req, res) => {
+  app.get("/api/v1/health", (req, res) => {
     res.json({
       status: "ok",
       service: "main-backend",
