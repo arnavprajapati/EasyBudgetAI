@@ -707,47 +707,47 @@ bot.on("webhook_error", (error) => {
     console.error("Webhook error:", error);
 });
 
-export async function setupTelegramWebhook(app) {
-    if (!WEBHOOK_URL) {
-        console.error("❌ WEBHOOK_URL is missing");
-        return;
-    }
+// export async function setupTelegramWebhook(app) {
+//     if (!WEBHOOK_URL) {
+//         console.error("❌ WEBHOOK_URL is missing");
+//         return;
+//     }
 
-    try {
-        const webhookPath = `/api/v1/telegram-webhook`;
-        const fullWebhookUrl = `${WEBHOOK_URL}${webhookPath}`;
+//     try {
+//         const webhookPath = `/api/v1/telegram-webhook`;
+//         const fullWebhookUrl = `${WEBHOOK_URL}${webhookPath}`;
 
-        console.log("🔧 Setting up Telegram webhook...");
-        console.log("📍 Target URL:", fullWebhookUrl);
+//         console.log("🔧 Setting up Telegram webhook...");
+//         console.log("📍 Target URL:", fullWebhookUrl);
 
-        app.post(webhookPath, (req, res) => {
-            try {
-                bot.processUpdate(req.body);
-                res.sendStatus(200);
-            } catch (error) {
-                console.error("Error processing update:", error);
-                res.sendStatus(500);
-            }
-        });
+//         app.post(webhookPath, (req, res) => {
+//             try {
+//                 bot.processUpdate(req.body);
+//                 res.sendStatus(200);
+//             } catch (error) {
+//                 console.error("Error processing update:", error);
+//                 res.sendStatus(500);
+//             }
+//         });
 
-        setTimeout(async () => {
-            try {
-                await bot.deleteWebHook({ drop_pending_updates: true });
-                await bot.setWebHook(fullWebhookUrl, {
-                    drop_pending_updates: true,
-                    allowed_updates: ["message", "callback_query"],
-                });
+//         setTimeout(async () => {
+//             try {
+//                 await bot.deleteWebHook({ drop_pending_updates: true });
+//                 await bot.setWebHook(fullWebhookUrl, {
+//                     drop_pending_updates: true,
+//                     allowed_updates: ["message", "callback_query"],
+//                 });
 
-                const info = await bot.getWebHookInfo();
-                console.log("✅ Webhook set:", info.url);
-            } catch (error) {
-                console.error("❌ Webhook setup failed:", error.message);
-            }
-        }, 3000);
-    } catch (error) {
-        console.error("❌ Failed to setup webhook:", error.message);
-    }
-}
+//                 const info = await bot.getWebHookInfo();
+//                 console.log("✅ Webhook set:", info.url);
+//             } catch (error) {
+//                 console.error("❌ Webhook setup failed:", error.message);
+//             }
+//         }, 3000);
+//     } catch (error) {
+//         console.error("❌ Failed to setup webhook:", error.message);
+//     }
+// }
 
 export default bot;
 
