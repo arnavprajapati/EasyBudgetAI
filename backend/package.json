@@ -7,7 +7,8 @@
     "start": "node index.js",
     "dev": "APP_MODE=backend PORT=5000 nodemon index.js",
     "bot": "APP_MODE=telegram-bot PORT=10000 node index.js",
-    "bot:dev": "APP_MODE=telegram-bot PORT=10000 nodemon index.js"
+    "bot:dev": "APP_MODE=telegram-bot PORT=10000 nodemon index.js",
+    "bot:start": "APP_MODE=telegram-bot PORT=10000 node index.js"
   },
   "keywords": [],
   "author": "",
