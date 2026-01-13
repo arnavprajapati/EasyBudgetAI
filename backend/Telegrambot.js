@@ -22,7 +22,6 @@ const handleStart = async (msg) => {
     const telegramUserId = msg.from.id.toString();
     const telegramUsername = msg.from.username;
 
-    // Store chatId for proactive OTP sending
     if (telegramUsername) {
         await storeTelegramChatId(telegramUsername, chatId);
     }
@@ -704,17 +703,13 @@ bot.on("message", async (msg) => {
     return handleExpenseMessage(msg);
 });
 
-
 bot.on("webhook_error", (error) => {
     console.error("Webhook error:", error);
 });
 
-
 export async function setupTelegramWebhook(app) {
     if (!WEBHOOK_URL) {
-        console.error("❌ WEBHOOK_URL is missing. Telegram webhook not configured.");
-        console.log("ℹ️  Please set WEBHOOK_URL environment variable");
-        console.log("ℹ️  Example: WEBHOOK_URL=https://yourdomain.com");
+        console.error("❌ WEBHOOK_URL is missing");
         return;
     }
 
@@ -734,50 +729,134 @@ export async function setupTelegramWebhook(app) {
                 res.sendStatus(500);
             }
         });
-        console.log("✅ Express webhook endpoint registered");
 
         setTimeout(async () => {
             try {
-                try {
-                    await bot.deleteWebHook({ drop_pending_updates: true });
-                    console.log("🗑️  Old webhook deleted successfully");
-                } catch (deleteError) {
-                    console.log("ℹ️  Error deleting old webhook:", deleteError.message);
-                }
-
+                await bot.deleteWebHook({ drop_pending_updates: true });
                 await bot.setWebHook(fullWebhookUrl, {
                     drop_pending_updates: true,
                     allowed_updates: ["message", "callback_query"],
                 });
-                console.log("✅ Webhook set successfully!");
 
-                try {
-                    const info = await bot.getWebHookInfo();
-                    console.log("📊 Webhook Status:");
-                    console.log("   URL:", info.url);
-                    console.log("   Pending updates:", info.pending_update_count);
-
-                    if (info.last_error_date) {
-                        const errorDate = new Date(info.last_error_date * 1000);
-                        console.warn("⚠️  Last error date:", errorDate.toLocaleString());
-                        console.warn("⚠️  Last error message:", info.last_error_message);
-                    } else {
-                        console.log("✅ No webhook errors - bot is ready!");
-                    }
-                } catch (infoError) {
-                    console.log("ℹ️  Could not get webhook info:", infoError.message);
-                }
-
-            } catch (webhookError) {
-                console.error("⚠️ Telegram webhook setup error (non-fatal):", webhookError.message);
-                console.log("ℹ️  Server will continue running. Webhook may need manual setup.");
+                const info = await bot.getWebHookInfo();
+                console.log("✅ Webhook set:", info.url);
+            } catch (error) {
+                console.error("❌ Webhook setup failed:", error.message);
             }
         }, 3000);
-
     } catch (error) {
-        console.error("❌ Failed to setup Telegram webhook:", error.message);
-        console.log("ℹ️  Server will continue running without Telegram webhook.");
+        console.error("❌ Failed to setup webhook:", error.message);
     }
 }
 
 export default bot;
+
+export async function startBotService() {
+    console.log("🤖 Starting Telegram Bot Service...");
+
+    const express = (await import('express')).default;
+    const app = express();
+    app.use(express.json());
+
+    try {
+        const connectDb = (await import('./config/db.js')).default;
+        await connectDb();
+        console.log("✅ Database connected");
+    } catch (error) {
+        console.error("❌ DB connection failed:", error.message);
+        process.exit(1);
+    }
+
+    try {
+        const { connectRedis } = await import('./config/redis.js');
+        await connectRedis();
+        console.log("✅ Redis connected");
+    } catch (error) {
+        console.log("⚠️ Redis connection failed (optional)");
+    }
+
+    app.get('/health', (req, res) => {
+        res.json({
+            status: 'running',
+            service: 'telegram-bot',
+            mode: process.env.APP_MODE || 'telegram-bot',
+            timestamp: new Date().toISOString()
+        });
+    });
+
+    app.post('/webhook', (req, res) => {
+        try {
+            console.log("📨 Webhook received");
+            bot.processUpdate(req.body);
+            res.sendStatus(200);
+        } catch (error) {
+            console.error("❌ Webhook error:", error);
+            res.sendStatus(500);
+        }
+    });
+
+    const PORT = process.env.PORT || 10000;
+
+    app.listen(PORT, async () => {
+        console.log(`🤖 Telegram Bot Service running on port ${PORT}`);
+        console.log(`📍 Webhook URL: ${WEBHOOK_URL}`);
+
+        if (WEBHOOK_URL) {
+            setTimeout(async () => {
+                try {
+                    const webhookUrl = `${WEBHOOK_URL}/webhook`;
+
+                    console.log("🔧 Setting up webhook to:", webhookUrl);
+
+                    await bot.deleteWebHook({ drop_pending_updates: true });
+                    console.log("🗑️ Old webhook deleted");
+
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    await bot.setWebHook(webhookUrl, {
+                        drop_pending_updates: true,
+                        allowed_updates: ["message", "callback_query"]
+                    });
+                    console.log("✅ Webhook set successfully!");
+
+                    const info = await bot.getWebHookInfo();
+                    console.log("📊 Webhook Status:");
+                    console.log("   URL:", info.url);
+                    console.log("   Pending:", info.pending_update_count);
+
+                    if (!info.last_error_date) {
+                        console.log("✅ Bot is ready!");
+                    } else {
+                        const errorDate = new Date(info.last_error_date * 1000);
+                        console.warn("⚠️ Last error:", errorDate.toLocaleString());
+                    }
+                } catch (error) {
+                    console.error("❌ Webhook setup failed:", error.message);
+                }
+            }, 3000);
+        } else {
+            console.error("❌ WEBHOOK_URL not set!");
+        }
+    });
+
+    process.on('SIGTERM', async () => {
+        console.log('🛑 Shutting down...');
+        try {
+            await bot.deleteWebHook();
+            console.log("✅ Webhook removed");
+        } catch (error) {
+            console.error("Error:", error);
+        }
+        process.exit(0);
+    });
+
+    process.on('SIGINT', async () => {
+        console.log('\n🛑 SIGINT received...');
+        try {
+            await bot.deleteWebHook();
+        } catch (error) {
+            console.error("Error:", error);
+        }
+        process.exit(0);
+    });
+}

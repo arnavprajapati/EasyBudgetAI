@@ -5,10 +5,9 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
-    "bot:standalone": "node TelegramBot.js",
-    "bot:standalone:dev": "nodemon TelegramBot.js",
-    "start:all:standalone": "concurrently \"nodemon index.js\" \"nodemon TelegramBot.js\""
+    "dev": "APP_MODE=backend PORT=5000 nodemon index.js",
+    "bot": "APP_MODE=telegram-bot PORT=10000 node index.js",
+    "bot:dev": "APP_MODE=telegram-bot PORT=10000 nodemon index.js"
   },
   "keywords": [],
   "author": "",
