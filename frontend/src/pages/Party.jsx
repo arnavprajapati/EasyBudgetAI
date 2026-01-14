@@ -77,7 +77,6 @@ const Party = () => {
     return (
         <div className="min-h-screen bg-gray-50 py-10 px-4">
             <div className="max-w-2xl mx-auto">
-                {/* Header */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -98,27 +97,38 @@ const Party = () => {
                     </div>
                 </div>
 
-                {/* Summary Cards */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center gap-2 mb-2">
-                            <TrendingUp size={20} className="text-green-600" />
-                            <span className="text-sm font-bold text-green-700">To Receive</span>
+                    <div className="bg-green-50 rounded-2xl shadow-sm border border-green-200 p-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                    <TrendingUp size={20} className="text-green-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-green-700">To Receive</p>
+                                    <p className="text-xs font-semibold text-green-600">They owe you</p>
+                                </div>
+                            </div>
+                            <p className="text-2xl font-bold text-green-600">{formatCurrency(summary.toReceive)}</p>
                         </div>
-                        <p className="text-3xl font-bold text-green-600">{formatCurrency(summary.toReceive)}</p>
                     </div>
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center gap-2 mb-2">
-                            <TrendingDown size={20} className="text-red-600" />
-                            <span className="text-sm font-bold text-red-700">To Give</span>
+                    <div className="bg-red-50 rounded-2xl shadow-sm border border-red-200 p-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                    <TrendingDown size={20} className="text-red-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-red-700">To Give</p>
+                                    <p className="text-xs font-semibold text-red-600">You owe them</p>
+                                </div>
+                            </div>
+                            <p className="text-2xl font-bold text-red-600">{formatCurrency(summary.toGive)}</p>
                         </div>
-                        <p className="text-3xl font-bold text-red-600">{formatCurrency(summary.toGive)}</p>
                     </div>
                 </div>
 
-                {/* Parties List */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    {/* Search & Refresh */}
                     <div className="p-6 border-b border-gray-50 flex items-center gap-4">
                         <div className="relative flex-1">
                             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -139,7 +149,6 @@ const Party = () => {
                         </button>
                     </div>
 
-                    {/* List */}
                     <div className="p-6">
                         {loading ? (
                             <div className="flex justify-center py-8">

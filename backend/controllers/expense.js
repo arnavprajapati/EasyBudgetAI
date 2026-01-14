@@ -367,10 +367,6 @@ export const saveExpensesFromTelegram = async (telegramUserId, messageText, opti
         }
 
         const expensesToCreate = parsed.transactions.map((txn) => {
-            const isPending = txn.description?.toLowerCase().includes('pending:') ||
-                txn.description?.toLowerCase().includes('to receive') ||
-                txn.description?.toLowerCase().includes('to pay');
-
             return {
                 userId: user._id,
                 telegramId: telegramUserId,
@@ -381,7 +377,8 @@ export const saveExpensesFromTelegram = async (telegramUserId, messageText, opti
                 date: new Date(),
                 source: "telegram",
                 partyName: txn.partyName || null,
-                isPending: isPending,
+                isPending: txn.isPending || false,
+                // khataType is calculated from type in getParties/getPartyTransactions
             };
         });
 
@@ -418,23 +415,17 @@ export const getParties = TryCatch(async (req, res) => {
         const key = partyName.toLowerCase();
         const existing = partyMap.get(key);
 
-
-        const descLower = txn.description?.toLowerCase() || '';
-        const isToReceive = txn.isPending && descLower.includes('to receive');
-        const isToPay = txn.isPending && descLower.includes('to pay');
-
-        const isGiven = !txn.isPending && txn.type === 'debit' &&
-            (txn.category === 'Personal & Transfers');
-        const isReceived = !txn.isPending && txn.type === 'credit' &&
-            (txn.category === 'Received from Others');
+        // SIMPLE: debit = to_receive (they owe me), credit = to_give (I owe them)
+        // Ignore AI's khataType - just use transaction type
+        const khataType = txn.type === 'debit' ? 'to_receive' : 'to_give';
 
         if (existing) {
             existing.count++;
             existing.lastActivity = Math.max(existing.lastActivity, new Date(txn.date).getTime());
 
-            if (isToReceive || isGiven) {
+            if (khataType === 'to_receive') {
                 existing.toReceive += txn.amount;
-            } else if (isToPay || isReceived) {
+            } else {
                 existing.toGive += txn.amount;
             }
 
@@ -444,22 +435,26 @@ export const getParties = TryCatch(async (req, res) => {
                 name: partyName,
                 count: 1,
                 lastActivity: new Date(txn.date).getTime(),
-                toReceive: (isToReceive || isGiven) ? txn.amount : 0,
-                toGive: (isToPay || isReceived) ? txn.amount : 0,
+                toReceive: khataType === 'to_receive' ? txn.amount : 0,
+                toGive: khataType === 'to_give' ? txn.amount : 0,
                 transactions: [txn]
             });
         }
     }
 
     const parties = Array.from(partyMap.values())
-        .map(party => ({
-            name: party.name,
-            count: party.count,
-            lastActivity: party.lastActivity,
-            toReceive: party.toReceive,
-            toGive: party.toGive,
-            netBalance: party.toReceive - party.toGive,
-        }))
+        .map(party => {
+            const netBalance = party.toReceive - party.toGive;
+
+            return {
+                name: party.name,
+                count: party.count,
+                lastActivity: party.lastActivity,
+                toReceive: party.toReceive,
+                toGive: party.toGive,
+                netBalance: netBalance,
+            };
+        })
         .sort((a, b) => b.lastActivity - a.lastActivity);
 
     res.json({
@@ -472,6 +467,8 @@ export const getParties = TryCatch(async (req, res) => {
         }
     });
 });
+
+
 
 export const getPartyTransactions = TryCatch(async (req, res) => {
     const userId = req.user._id;
@@ -489,32 +486,28 @@ export const getPartyTransactions = TryCatch(async (req, res) => {
         partyName: { $regex: new RegExp(`^${partyName}$`, 'i') }
     }).sort({ date: -1 }).lean();
 
-    let toReceive = 0;
-    let toGive = 0;
+    let toReceive = 0;  // They owe me (I gave money - debit)
+    let toGive = 0;     // I owe them (I received money - credit)
 
     const processedTransactions = transactions.map(txn => {
-        const descLower = txn.description?.toLowerCase() || '';
-        const isToReceive = txn.isPending && descLower.includes('to receive');
-        const isToPay = txn.isPending && descLower.includes('to pay');
-        const isGiven = !txn.isPending && txn.type === 'debit' &&
-            txn.category === 'Personal & Transfers';
-        const isReceived = !txn.isPending && txn.type === 'credit' &&
-            txn.category === 'Received from Others';
+        // SIMPLE: debit = to_receive (they owe me), credit = to_give (I owe them)
+        const khataType = txn.type === 'debit' ? 'to_receive' : 'to_give';
 
-        if (isToReceive || isGiven) {
+        if (khataType === 'to_receive') {
             toReceive += txn.amount;
-        } else if (isToPay || isReceived) {
+        } else {
             toGive += txn.amount;
         }
 
         return {
             ...txn,
-            khataType: isToReceive ? 'To Receive (Pending)' :
-                isToPay ? 'To Pay (Pending)' :
-                    isGiven ? 'Given (To Receive)' :
-                        isReceived ? 'Received (To Pay)' : 'Other'
+            khataType
         };
     });
+
+    // Net balance: toReceive - toGive
+    // Positive = they owe me, Negative = I owe them
+    const netBalance = toReceive - toGive;
 
     res.json({
         success: true,
@@ -523,8 +516,9 @@ export const getPartyTransactions = TryCatch(async (req, res) => {
         summary: {
             toReceive,
             toGive,
-            netBalance: toReceive - toGive,
+            netBalance,
             transactionCount: transactions.length
         }
     });
 });
+

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, LogOut, Settings as SettingsIcon, LayoutDashboard, BookOpen, User } from 'lucide-react';
+import { Wallet, LogOut, Settings as SettingsIcon, LayoutDashboard, BookOpen, User, Home } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../../redux/slices/authSlice';
@@ -33,6 +33,17 @@ function Navbar() {
 
                         {isAuth && (
                             <div className="hidden md:flex items-center bg-gray-50 rounded-xl p-1 border border-gray-100">
+                                <Link
+                                    to="/"
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                                        isActive('/') 
+                                        ? 'bg-white text-[#387ED1] shadow-sm' 
+                                        : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                    <Home size={18} />
+                                    Home
+                                </Link>
                                 <Link
                                     to="/dashboard"
                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
@@ -106,6 +117,16 @@ function Navbar() {
 
             {isAuth && (
                 <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-6 py-2 flex justify-around items-center z-50 pb-safe">
+                    <Link 
+                        to="/" 
+                        className={`flex flex-col items-center gap-1 ${isActive('/') ? 'text-[#387ED1]' : 'text-gray-400'}`}
+                    >
+                        <Home size={22} strokeWidth={isActive('/') ? 2.5 : 2} />
+                        <span className="text-[10px] font-bold">Home</span>
+                    </Link>
+
+                    <div className="w-px h-8 bg-gray-100" />
+
                     <Link 
                         to="/dashboard" 
                         className={`flex flex-col items-center gap-1 ${isActive('/dashboard') ? 'text-[#387ED1]' : 'text-gray-400'}`}

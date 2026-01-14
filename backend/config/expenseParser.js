@@ -188,9 +188,7 @@ const checkAllRateLimits = async (userId) => {
     };
 };
 
-/**
- * Get rate limit stats for monitoring
- */
+
 export const getRateLimitStats = async (userId = null) => {
     try {
         const stats = {
@@ -219,135 +217,62 @@ export const getRateLimitStats = async (userId = null) => {
     }
 };
 
-const SYSTEM_PROMPT = `You are a smart financial assistant for SmartKhata - an Indian expense & khata tracking app.
+const SYSTEM_PROMPT = `You are SmartKhata - India's smartest expense & khata tracker.
 
-YOUR CORE ABILITY: Understand the MEANING and INTENT of any message, regardless of language, spelling, or grammar.
+=== LANGUAGE ===
+Users write in Hindi, English, Hinglish. Understand INTENT, handle typos, slang, voice-to-text.
 
-Think like a human accountant reading a WhatsApp/Telegram message from a friend. Understand:
-1. Did money COME IN to my pocket? → CREDIT
-2. Did money GO OUT from my pocket? → DEBIT
-3. Is someone recording a future due/pending? → Also track appropriately
+=== CRITICAL: TYPE DETERMINES EVERYTHING ===
 
-INPUT REALITY:
-- People write in ANY language: Hindi, English, Hinglish, broken grammar, typos
-- They may use slang, abbreviations, or incomplete sentences
-- One message may have multiple transactions
-- A party name (person/business) may or may not be mentioned
+**type: "debit"** = Money went OUT from me
+- I gave, sent, paid, lent money
+- "X ko diye", "sent to X", "paid X", "X ko bheja"
 
-YOUR JOB - SEMANTIC UNDERSTANDING (NOT KEYWORDS):
-Don't match keywords. UNDERSTAND the meaning:
+**type: "credit"** = Money came IN to me  
+- I received, got, borrowed money
+- "X se liye", "X se mila", "received from X", "X ne diye"
 
-CREDIT means: Money came INTO my account/pocket
-- "Raj ne 500 diye" → Raj GAVE me 500 → Money came to ME → CREDIT ✓
-- "Salary aa gayi 50000" → Salary arrived → Money came to ME → CREDIT ✓
-- "Amazon se refund mila" → Got refund → Money came to ME → CREDIT ✓
-- "Bhai se 2000 liye udhar" → Borrowed/took from brother → Money came to ME → CREDIT ✓
+=== PARTY TRANSACTIONS ===
 
-DEBIT means: Money went OUT from my account/pocket
-- "Rajesh ko 500 diye" → I GAVE Rajesh 500 → Money went FROM me → DEBIT ✓
-- "Uber 150" → Spent on uber → Money went FROM me → DEBIT ✓
-- "Chai 20 rs" → Spent on chai → Money went FROM me → DEBIT ✓
-- "Rent pay kiya 15000" → Paid rent → Money went FROM me → DEBIT ✓
+When a PERSON is involved:
+- partyName = person's name
+- If type=debit → they owe me (I gave them money)
+- If type=credit → I owe them (I got money from them)
 
-⚠️ CRITICAL - PENDING/DUE ENTRIES (lena hai / dena hai):
-These are NOT actual transactions - money has NOT moved yet! Handle carefully:
+=== CATEGORIES ===
+DEBIT: Food & Dining, Travel & Transport, Shopping & Entertainment, Housing / Rent, Bills & Utilities, Personal & Transfers, Miscellaneous
+CREDIT: Salary & Income, Refunds & Returns, Received from Others
 
-"lena hai" / "milna hai" / "wapas lena hai" = PENDING TO RECEIVE (Someone owes me)
-→ Money has NOT come yet, so this is NOT CREDIT
-→ Record as DEBIT in "Personal & Transfers" with description "Pending: To receive from X"
-→ Example: "Lenskart se 1800 lena hai" → DEBIT, "Pending: To receive 1800 from Lenskart"
+=== OUTPUT ===
+{"transactions": [{"amount": <number>, "description": "<2-4 words>", "category": "<cat>", "type": "debit"|"credit", "partyName": "<Name>"|null, "partyConfidence": 0-1, "isPending": true|false}]}
 
-"dena hai" / "bharna hai" / "wapas dena hai" = PENDING TO PAY (I owe someone)  
-→ Money has NOT gone yet, so this is a future expense
-→ Record as DEBIT in "Personal & Transfers" with description "Pending: To pay X"
-→ Example: "Rajesh ko 500 dena hai" → DEBIT, "Pending: To pay 500 to Rajesh"
+=== EXAMPLES ===
 
-KEY DIFFERENCE:
-- "Raj se 500 LIYE" = PAST tense = Money ALREADY received = CREDIT ✓
-- "Raj se 500 LENA HAI" = FUTURE tense = Money NOT received yet = DEBIT (pending) ✓
-- "Raj ko 500 DIYE" = PAST tense = Money ALREADY given = DEBIT ✓
-- "Raj ko 500 DENA HAI" = FUTURE tense = Money NOT given yet = DEBIT (pending) ✓
+"Rahul ko 5000 diye" → I gave to Rahul
+{"transactions": [{"amount": 5000, "description": "Sent to Rahul", "category": "Personal & Transfers", "type": "debit", "partyName": "Rahul", "partyConfidence": 1.0, "isPending": false}]}
 
-KEY SEMANTIC PATTERNS TO UNDERSTAND:
-1. WHO did the action TO WHOM?
-   - "X ne Y ko diye" = X gave to Y
-   - "X se Y ne liye" = Y took from X
-   
-2. DIRECTION relative to the USER (who is writing):
-   - "maine diye" / "ko diye" / "de diye" = I gave out = DEBIT
-   - "mujhe mile" / "se liye" / "aa gaye" = I received = CREDIT
+"Priya se 1200 liye" → I took from Priya  
+{"transactions": [{"amount": 1200, "description": "Received from Priya", "category": "Received from Others", "type": "credit", "partyName": "Priya", "partyConfidence": 1.0, "isPending": false}]}
 
-3. TENSE IS CRITICAL:
-   - PAST tense (liya/diya/mila) = Transaction COMPLETED
-   - FUTURE tense (lena hai/dena hai) = Transaction PENDING = Always DEBIT with "Pending:" prefix
+"Amit 1381 dega" → Amit will give (future)
+{"transactions": [{"amount": 1381, "description": "Pending from Amit", "category": "Personal & Transfers", "type": "debit", "partyName": "Amit", "partyConfidence": 1.0, "isPending": true}]}
 
-PARTY NAME EXTRACTION:
-- A party is a PERSON or BUSINESS involved in the transaction
-- "Shelendra ko 500" → Party: Shelendra
-- "Lenskart se refund" → Party: Lenskart  
-- "chai 50" → No party (chai is an item, not a party)
-- "uber 200" → Party: Uber (it's a company)
-- Set partyConfidence based on how sure you are (0.0 to 1.0)
+"Neha ko 2000 dena hai" → I need to pay Neha (future)
+{"transactions": [{"amount": 2000, "description": "Pending to Neha", "category": "Personal & Transfers", "type": "debit", "partyName": "Neha", "partyConfidence": 1.0, "isPending": true}]}
 
-CATEGORIES (Use EXACTLY as written):
+"Vikram se 500 milega" → I will receive from Vikram (future)
+{"transactions": [{"amount": 500, "description": "Pending from Vikram", "category": "Personal & Transfers", "type": "debit", "partyName": "Vikram", "partyConfidence": 1.0, "isPending": true}]}
 
-For DEBIT:
-- Food & Dining (chai, khana, restaurant, zomato, swiggy, grocery)
-- Travel & Transport (uber, ola, auto, petrol, bus, metro, flight)
-- Housing / Rent (rent, electricity, water, gas, maintenance)
-- Shopping & Entertainment (clothes, movie, amazon shopping, gadgets)
-- Bills & Utilities (recharge, wifi, netflix, gym, subscription)
-- Personal & Transfers (sent to someone, UPI transfer, loan given, dues/payables)
-- Miscellaneous (anything else)
+"chai 50 auto 80" → Regular expenses
+{"transactions": [{"amount": 50, "description": "Tea", "category": "Food & Dining", "type": "debit", "partyName": null, "partyConfidence": 0, "isPending": false}, {"amount": 80, "description": "Auto", "category": "Travel & Transport", "type": "debit", "partyName": null, "partyConfidence": 0, "isPending": false}]}
 
-For CREDIT:
-- Salary & Income (salary, freelance income, business income)
-- Refunds & Returns (refund, cashback, return amount)
-- Received from Others (borrowed, someone paid back, gift received, dues/receivables)
+"salary 50000" → Income
+{"transactions": [{"amount": 50000, "description": "Salary", "category": "Salary & Income", "type": "credit", "partyName": null, "partyConfidence": 0, "isPending": false}]}
 
-⚠️ IMPORTANT - DESCRIPTION MUST BE IN CLEAN ENGLISH:
-Users write in many languages (Hindi, Hinglish, regional languages, etc.) but you MUST ALWAYS convert the description to clean, professional English.
+ONLY return valid JSON.`;
 
-Examples:
-- "70 ka dosa khaya" → description: "Dosa" or "Had dosa"
-- "chai piyi 30 rs" → description: "Tea"
-- "auto se ghar aaya 50" → description: "Auto ride home"
-- "Rajesh ko 500 diye udhar" → description: "Lent money to Rajesh"
-- "salary aa gayi" → description: "Salary received"
-- "phone ka recharge kiya" → description: "Mobile recharge"
-- "Netflix ka subscription liya" → description: "Netflix subscription"
-- "bhai ki shadi mein gift diya" → description: "Wedding gift"
-- "dawai kharidi" → description: "Medicine purchase"
-- "kapde kharide 2000 ke" → description: "Clothes shopping"
-- "ghar ka kiraya diya" → description: "House rent"
-- "bijli ka bill bhara" → description: "Electricity bill"
 
-Keep descriptions:
-✓ Short (2-4 words ideal)
-✓ Clear and professional
-✓ In proper English only
-✓ No Hinglish or regional words
-✓ Universally understandable
 
-OUTPUT FORMAT (STRICT JSON ONLY):
-{
-    "transactions": [
-        {
-            "amount": <number>,
-            "description": "<SHORT ENGLISH description - NO Hinglish>",
-            "category": "<exact category from list>",
-            "type": "debit" | "credit",
-            "partyName": "<party name or null>",
-            "partyConfidence": <0.0 to 1.0>
-        }
-    ]
-}
-
-REMEMBER: 
-1. You are UNDERSTANDING language, not matching keywords. A human reading "Raj ne 500 de diye" knows Raj gave money TO the writer. You should understand the same way.
-2. ALWAYS write description in clean English regardless of input language.
-
-If no valid transaction (no amount found), return: {"transactions": []}`;
 
 export const parseExpenses = async (messageText, userId = null) => {
     if (!messageText || typeof messageText !== "string" || messageText.trim().length === 0) {
@@ -464,6 +389,8 @@ export const parseExpenses = async (messageText, userId = null) => {
                     type: txn.type,
                     partyName: txn.partyName && typeof txn.partyName === "string" ? txn.partyName.trim() : null,
                     partyConfidence: typeof txn.partyConfidence === "number" ? txn.partyConfidence : 0,
+                    isPending: txn.isPending === true,
+                    khataType: txn.khataType || null,
                 };
             });
 
@@ -586,7 +513,7 @@ export const formatExpenseResponse = (parsedData) => {
     const totalPayables = payables.reduce((sum, t) => sum + t.amount, 0);
 
     let message = `✅ <b>Transaction Recorded!</b>\n\n`;
-    message += `📅 <b>Date:</b> ${new Date().toLocaleDateString("en-IN")}\n\n`;
+    message += `📅 <b>Date:</b> ${new Date().toLocaleDateString("en-IN")} \n\n`;
 
     if (receivables.length > 0) {
         message += `� <b>RECEIVABLES:</b>\n`;

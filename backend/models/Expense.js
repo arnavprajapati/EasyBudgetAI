@@ -59,6 +59,11 @@ const schema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        khataType: {
+            type: String,
+            enum: ["to_receive", "to_give", null],
+            default: null,
+        },
     },
     { timestamps: true }
 );

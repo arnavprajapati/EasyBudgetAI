@@ -30,7 +30,7 @@ const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-7">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-4">
                         <h2 className="text-2xl font-bold text-[#212529]">Add New Transaction</h2>
                         <button
                             onClick={onClose}
@@ -38,6 +38,12 @@ const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
                         >
                             <X size={22} className="text-[#828282]" />
                         </button>
+                    </div>
+                    
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-6">
+                        <p className="text-sm font-bold text-blue-700 text-center">
+                            💡 Tip: Use our <span className="text-blue-900">Telegram Bot</span> to add transactions easily just by typing naturally!
+                        </p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-5">

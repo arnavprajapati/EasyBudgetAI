@@ -4,10 +4,10 @@ import { fetchTelegramStatus } from "../redux/slices/telegramSlice";
 import api from "../apiIntercepter";
 import { toast } from "react-toastify";
 
-// Import Components
 import TelegramOnboarding from "./components/TelegramOnboarding";
 import DailyTrendChart from "./components/Dashboard/DailyTrendChart";
 import TimeFilter from "./components/Dashboard/TimeFilter";
+import AddTransactionModal from "./components/Dashboard/AddTransactionModal";
 
 const Home = () => {
     const { user } = useSelector((state) => state.auth);
@@ -17,6 +17,7 @@ const Home = () => {
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState('month');
+    const [showAddModal, setShowAddModal] = useState(false);
     const [summary, setSummary] = useState({
         totalIncome: 0,
         totalExpense: 0,
@@ -118,7 +119,6 @@ const Home = () => {
     const userName = user?.name?.split(' ')[0] || 'User';
     const net = summary.totalIncome - summary.totalExpense;
 
-    // Category badge colors
     const categoryColors = {
         'Food & Dining': 'bg-orange-500',
         'Travel & Transport': 'bg-blue-500',
@@ -154,41 +154,54 @@ const Home = () => {
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-                            Welcome back, <span className="text-[#387ED1]">{userName}</span>! 👋
+                            Welcome back, <span className="text-[#387ED1]">{userName}</span>!
                         </h1>
-                        <p className="text-gray-500 mt-1 font-medium">
-                            Here's your financial overview
-                        </p>
                     </div>
-                    <div className="text-right">
-                        <p className={`text-2xl md:text-3xl font-bold ${summary.totalBalance >= 0 ? 'text-gray-800' : 'text-red-500'}`}>
-                            ₹{summary.totalBalance.toLocaleString('en-IN')}
-                        </p>
-                        <p className="text-sm text-gray-400">{summary.transactionCount} Transactions</p>
+                    <div className="flex items-center gap-3">
+                        <TimeFilter selectedPeriod={period} onPeriodChange={setPeriod} />
+                        <a
+                            href="/party"
+                            className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                            </svg>
+                            Khata Book
+                        </a>
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-colors cursor-pointer"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Add Transaction
+                        </button>
                     </div>
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-                    <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                    <div className="p-5 border-b border-gray-100">
                         <h2 className="text-lg font-bold text-gray-800">Transaction Overview</h2>
-                        <TimeFilter selectedPeriod={period} onPeriodChange={setPeriod} />
                     </div>
 
                     <div className="grid grid-cols-3 border-b border-gray-100">
                         <div className="p-5 text-center border-r border-gray-100">
-                            <p className="text-sm text-gray-500 font-medium mb-1">Total Income</p>
+                            <p className="text-base text-gray-500 font-semibold mb-1">Total Income</p>
                             <p className="text-xl md:text-2xl font-bold text-green-500">
                                 ₹{summary.totalIncome.toLocaleString('en-IN')}
                             </p>
                         </div>
                         <div className="p-5 text-center border-r border-gray-100">
-                            <p className="text-sm text-gray-500 font-medium mb-1">Total Expenses</p>
+                            <p className="text-base text-gray-500 font-semibold mb-1">Total Expenses</p>
                             <p className="text-xl md:text-2xl font-bold text-red-500">
                                 ₹{summary.totalExpense.toLocaleString('en-IN')}
                             </p>
                         </div>
                         <div className="p-5 text-center">
-                            <p className="text-sm text-gray-500 font-medium mb-1">Net</p>
+                            <p className="text-base text-gray-500 font-semibold mb-1">Net</p>
                             <p className={`text-xl md:text-2xl font-bold ${net >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                 ₹{net.toLocaleString('en-IN')}
                             </p>
@@ -260,6 +273,12 @@ const Home = () => {
                     )}
                 </div>
             </div>
+            
+            <AddTransactionModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onSuccess={fetchExpenses}
+            />
         </div>
     );
 };
