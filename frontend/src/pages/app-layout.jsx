@@ -6,7 +6,7 @@ const AppLayout = () => {
     return (
         <>
             <Navbar />
-            <div className="mt-10">
+            <div>
                 <Outlet />
             </div>
         </>
