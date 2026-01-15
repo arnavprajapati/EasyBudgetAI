@@ -231,37 +231,37 @@ const Home = () => {
                             <table className="w-full">
                                 <thead className="bg-gray-50 border-b border-gray-100">
                                     <tr>
-                                        <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</th>
-                                        <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
-                                        <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                                        <th className="text-left px-8 py-5 text-sm font-bold text-gray-500 uppercase tracking-wider w-1/4">Date</th>
+                                        <th className="text-left px-8 py-5 text-sm font-bold text-gray-500 uppercase tracking-wider w-1/3">Description</th>
+                                        <th className="text-center px-8 py-5 text-sm font-bold text-gray-500 uppercase tracking-wider w-1/6">Category</th>
+                                        <th className="text-right px-8 py-5 text-sm font-bold text-gray-500 uppercase tracking-wider w-1/4">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     {filteredExpenses.slice(0, 15).map((expense, index) => (
                                         <tr key={expense._id || index} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-5 py-4 text-sm text-gray-600 font-medium whitespace-nowrap">
+                                            <td className="px-8 py-6 text-base text-gray-600 font-semibold whitespace-nowrap">
                                                 {new Date(expense.date).toLocaleDateString('en-IN', {
                                                     day: 'numeric',
                                                     month: 'short',
                                                     year: 'numeric'
                                                 })}
                                             </td>
-                                            <td className="px-5 py-4">
-                                                <p className="text-sm font-semibold text-gray-800">
+                                            <td className="px-8 py-6">
+                                                <p className="text-base font-semibold text-gray-800">
                                                     {expense.description || expense.category}
                                                 </p>
                                                 {expense.partyName && (
-                                                    <p className="text-xs text-gray-400 mt-0.5">{expense.partyName}</p>
+                                                    <p className="text-xs font-semibold text-gray-400 mt-1">{expense.partyName}</p>
                                                 )}
                                             </td>
-                                            <td className="px-5 py-4">
-                                                <span className={`inline-block px-3 py-1 text-xs font-semibold text-white rounded-md ${categoryColors[expense.category] || 'bg-gray-500'}`}>
+                                            <td className="px-8 py-6 text-center">
+                                                <span className={`inline-block px-4 py-1.5 text-sm font-bold text-white rounded-lg shadow-sm ${categoryColors[expense.category] || 'bg-gray-500'}`}>
                                                     {expense.category?.split(' ')[0] || 'Other'}
                                                 </span>
                                             </td>
-                                            <td className="px-5 py-4 text-right">
-                                                <span className={`font-bold ${expense.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
+                                            <td className="px-8 py-6 text-right">
+                                                <span className={`text-lg font-bold ${expense.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
                                                     {expense.type === 'credit' ? '+' : '-'}₹{expense.amount.toLocaleString('en-IN')}
                                                 </span>
                                             </td>
