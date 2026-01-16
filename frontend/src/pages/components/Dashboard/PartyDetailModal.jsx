@@ -153,7 +153,7 @@ const PartyDetailModal = ({ party, onClose }) => {
                                 </div>
                             ) : transactions.length === 0 ? (
                                 <div className="text-center py-8">
-                                    <p className="text-gray-500">No transactions found</p>
+                                    <p className="text-gray-500 font-semibold">No transactions found</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2">

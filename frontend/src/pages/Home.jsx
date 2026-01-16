@@ -131,18 +131,7 @@ const Home = () => {
         'Other': 'bg-gray-500'
     };
 
-    if (loading || telegramLoading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#387ED1] mx-auto"></div>
-                    <p className="mt-4 text-gray-600 font-bold">Loading your dashboard...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (!linked) {
+    if (!telegramLoading && !linked) {
         return <TelegramOnboarding userName={userName} />;
     }
 
@@ -151,33 +140,35 @@ const Home = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-6 px-4 md:px-8">
             <div className="max-w-6xl mx-auto">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
                             Welcome back, <span className="text-[#387ED1]">{userName}</span>!
                         </h1>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 md:gap-3">
                         <TimeFilter selectedPeriod={period} onPeriodChange={setPeriod} />
                         <a
                             href="/party"
-                            className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-colors"
+                            className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-3 md:px-4 py-2.5 rounded-xl font-bold text-sm transition-colors whitespace-nowrap"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
                                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                             </svg>
-                            Khata Book
+                            <span className="hidden sm:inline">Khata Book</span>
+                            <span className="sm:hidden">Khata</span>
                         </a>
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-colors cursor-pointer"
+                            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-3 md:px-4 py-2.5 rounded-xl font-bold text-sm transition-colors cursor-pointer whitespace-nowrap"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <line x1="12" y1="5" x2="12" y2="19" />
                                 <line x1="5" y1="12" x2="19" y2="12" />
                             </svg>
-                            Add Transaction
+                            <span className="hidden sm:inline">Add Transaction</span>
+                            <span className="sm:hidden">Add</span>
                         </button>
                     </div>
                 </div>
@@ -223,8 +214,8 @@ const Home = () => {
 
                     {filteredExpenses.length === 0 ? (
                         <div className="p-12 text-center text-gray-400">
-                            <p className="font-medium text-lg">No transactions yet</p>
-                            <p className="text-sm mt-1">Start tracking via Telegram!</p>
+                            <p className="font-semibold text-lg">No transactions yet</p>
+                            <p className="text-sm font-semibold mt-1">Start tracking via Telegram!</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">

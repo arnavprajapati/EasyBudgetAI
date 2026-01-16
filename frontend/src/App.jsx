@@ -17,6 +17,7 @@ import Party from "./pages/Party";
 import Loading from "./Loding";
 import { fetchUser } from "./redux/slices/authSlice";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 
 const AppContent = () => {
   const { isAuth, loading } = useSelector((state) => state.auth);
@@ -73,6 +74,10 @@ const AppContent = () => {
         {
           path: "/party",
           element: isAuth ? <Party /> : <Navigate to="/login" replace />
+        },
+        {
+          path: "/profile",
+          element: isAuth ? <Profile /> : <Navigate to="/login" replace />
         }
       ]
     }
