@@ -564,7 +564,7 @@ function LandingPage() {
                         Ready to Take Control?
                     </h2>
                     <p className="text-xl font-semibold text-blue-100 mb-8 max-w-2xl mx-auto">
-                        Join thousands of users who are already managing their finances smarter with SmartKhata.
+                        Manage your finances efficiently with SmartKhata — simple, reliable, and built for everyday use.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button
