@@ -126,18 +126,62 @@ const Dashboard = () => {
 
     const generateCategoryData = (expenses) => {
         const categoryMap = {};
+        
         const categoryColors = {
             'Food & Dining': '#FF6B6B',
+            'Food': '#FF6B6B',
+            'Dining': '#E85D5D',
             'Travel & Transport': '#4ECDC4',
-            'Shopping & Entertainment': '#95E1D3',
-            'Housing / Rent': '#F38181',
-            'Bills & Utilities': '#AA96DA',
-            'Personal & Transfers': '#FCBAD3',
-            'Miscellaneous': '#FFB84D',
+            'Travel': '#4ECDC4',
+            'Transport': '#38B2AC',
+            'Transportation': '#38B2AC',
+            'Shopping & Entertainment': '#9F7AEA',
+            'Shopping': '#9F7AEA',
+            'Entertainment': '#B794F6',
+            'Housing / Rent': '#F687B3',
+            'Housing': '#F687B3',
+            'Rent': '#ED64A6',
+            'Bills & Utilities': '#F6AD55',
+            'Bills': '#F6AD55',
+            'Utilities': '#ED8936',
+            'Personal & Transfers': '#63B3ED',
+            'Personal': '#63B3ED',
+            'Transfers': '#4299E1',
+            'Miscellaneous': '#FC8181',
+            'Other': '#A0AEC0',
+            'Healthcare': '#48BB78',
+            'Health': '#48BB78',
+            'Medical': '#38A169',
+            'Education': '#667EEA',
+            'Groceries': '#68D391',
+            'Grocery': '#68D391',
+            'Fuel': '#FBD38D',
+            'Petrol': '#FBD38D',
+            'Investment': '#805AD5',
+            'Investments': '#805AD5',
+            
             'Salary & Income': '#00D563',
+            'Salary': '#00D563',
+            'Income': '#38A169',
             'Refunds & Returns': '#4F9CF9',
-            'Received from Others': '#FFA726'
+            'Refund': '#4F9CF9',
+            'Refunds': '#4F9CF9',
+            'Returns': '#3182CE',
+            'Received from Others': '#FFA726',
+            'Received': '#FFA726',
+            'Bonus': '#F6E05E',
+            'Freelance': '#9AE6B4',
+            'Interest': '#90CDF4',
+            'Dividend': '#C4B5FD',
+            'Gift': '#FBB6CE'
         };
+
+        const fallbackColors = [
+            '#FF6B6B', '#4ECDC4', '#9F7AEA', '#F687B3', '#F6AD55',
+            '#63B3ED', '#48BB78', '#FBD38D', '#FC8181', '#667EEA',
+            '#68D391', '#805AD5', '#00D563', '#FFA726', '#F6E05E',
+            '#90CDF4', '#FBB6CE', '#C4B5FD', '#9AE6B4', '#ED8936'
+        ];
 
         let filtered = expenses;
         if (selectedView === 'credit') {
@@ -146,12 +190,19 @@ const Dashboard = () => {
             filtered = expenses.filter(expense => expense.type === 'debit');
         }
 
+        let colorIndex = 0;
         filtered.forEach(expense => {
             if (!categoryMap[expense.category]) {
+                let color = categoryColors[expense.category];
+                if (!color) {
+                    color = fallbackColors[colorIndex % fallbackColors.length];
+                    colorIndex++;
+                }
+                
                 categoryMap[expense.category] = {
                     name: expense.category,
                     value: 0,
-                    color: categoryColors[expense.category] || '#BDBDBD'
+                    color: color
                 };
             }
             categoryMap[expense.category].value += expense.amount;
@@ -164,43 +215,34 @@ const Dashboard = () => {
         setCategoryData(data);
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#4F9CF9] mx-auto"></div>
-                    <p className="mt-4 text-[#4F4F4F] font-bold">Loading your financial insights...</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen bg-white py-16 px-6">
             <div className="max-w-7xl mx-auto">
 
-                <div className="mb-8 flex items-center justify-between">
-                    <h1 className="text-5xl font-bold text-[#212529]">
+                <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <h1 className="text-3xl md:text-5xl font-bold text-[#212529]">
                         Welcome back, <span className="text-[#4F9CF9]">{user?.name?.split(' ')[0] || 'User'}</span>!
                     </h1>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 md:gap-3">
                         <TimeFilter
                             selectedPeriod={period}
                             onPeriodChange={setPeriod}
                         />
                         <button
                             onClick={() => navigate('/party')}
-                            className="flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-700 transition-all text-sm shadow-lg cursor-pointer"
+                            className="flex items-center gap-2 bg-purple-600 text-white px-4 md:px-6 py-3 rounded-lg font-bold hover:bg-purple-700 transition-all text-sm shadow-lg cursor-pointer whitespace-nowrap"
                         >
                             <BookOpen size={20} />
-                            Khata Book
+                            <span className="hidden sm:inline">Khata Book</span>
+                            <span className="sm:hidden">Khata</span>
                         </button>
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-2 bg-[#1E1E1E] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#000000] transition-all text-sm shadow-lg cursor-pointer"
+                            className="flex items-center gap-2 bg-[#1E1E1E] text-white px-4 md:px-6 py-3 rounded-lg font-bold hover:bg-[#000000] transition-all text-sm shadow-lg cursor-pointer whitespace-nowrap"
                         >
                             <Plus size={20} />
-                            Add Transaction
+                            <span className="hidden sm:inline">Add Transaction</span>
+                            <span className="sm:hidden">Add</span>
                         </button>
                     </div>
                 </div>

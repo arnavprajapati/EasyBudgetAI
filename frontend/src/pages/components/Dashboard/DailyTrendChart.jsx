@@ -11,7 +11,6 @@ import {
 } from 'recharts';
 
 const DailyTrendChart = ({ expenses }) => {
-    // Group expenses by date
     const generateDailyData = () => {
         const dailyMap = {};
 
@@ -38,10 +37,9 @@ const DailyTrendChart = ({ expenses }) => {
             }
         });
 
-        // Sort by date and return array
         return Object.values(dailyMap)
             .sort((a, b) => new Date(a.date) - new Date(b.date))
-            .slice(-30); // Last 30 days max
+            .slice(-1120);
     };
 
     const chartData = generateDailyData();
@@ -72,7 +70,7 @@ const DailyTrendChart = ({ expenses }) => {
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                     📈 Daily Spending Trend
                 </h3>
-                <div className="flex items-center justify-center h-64 text-gray-400 font-medium">
+                <div className="flex items-center justify-center h-64 text-gray-400 font-semibold">
                     No transaction data available
                 </div>
             </div>

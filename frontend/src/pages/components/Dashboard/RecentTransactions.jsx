@@ -171,7 +171,7 @@ const RecentTransactions = ({
                     ))
                 ) : (
                     <div className="text-center py-12">
-                        <p className="text-[#828282] font-bold">No transactions found</p>
+                        <p className="text-[#828282] font-semibold ">No transactions found</p>
                     </div>
                 )}
             </div>
