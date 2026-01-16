@@ -172,9 +172,6 @@ const Home = () => {
         'Gift': 'bg-pink-400'
     };
 
-    if (!telegramLoading && !linked) {
-        return <TelegramOnboarding userName={userName} />;
-    }
 
     const filteredExpenses = getFilteredExpenses();
 

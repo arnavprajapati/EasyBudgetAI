@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../../redux/slices/authSlice';
 
-function Navbar() {
+function Navbar({ onAuthClick }) {
     const { isAuth, user } = useSelector((state) => state.auth);
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -15,6 +15,12 @@ function Navbar() {
     };
 
     const isActive = (path) => location.pathname === path;
+
+    // Hide navbar on landing page for non-authenticated users
+    const isLandingPage = location.pathname === '/';
+    if (isLandingPage && !isAuth) {
+        return null;
+    }
 
     return (
         <>
@@ -102,15 +108,34 @@ function Navbar() {
                                 </div>
                             ) : (
                                 <div className="flex items-center space-x-3">
-                                    <Link to="/login" className="text-sm font-bold text-gray-600 hover:text-[#387ED1]">
-                                        Login
-                                    </Link>
-                                    <Link
-                                        to="/register"
-                                        className="bg-[#387ED1] text-white text-sm font-bold px-5 py-2 rounded-xl shadow-md hover:shadow-blue-200 transition-all"
-                                    >
-                                        Sign Up
-                                    </Link>
+                                    {onAuthClick ? (
+                                        <>
+                                            <button 
+                                                onClick={() => onAuthClick('login')} 
+                                                className="text-sm font-bold text-gray-600 hover:text-[#387ED1]"
+                                            >
+                                                Login
+                                            </button>
+                                            <button
+                                                onClick={() => onAuthClick('register')}
+                                                className="bg-[#387ED1] text-white text-sm font-bold px-5 py-2 rounded-xl shadow-md hover:shadow-blue-200 transition-all"
+                                            >
+                                                Sign Up
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Link to="/login" className="text-sm font-bold text-gray-600 hover:text-[#387ED1]">
+                                                Login
+                                            </Link>
+                                            <Link
+                                                to="/register"
+                                                className="bg-[#387ED1] text-white text-sm font-bold px-5 py-2 rounded-xl shadow-md hover:shadow-blue-200 transition-all"
+                                            >
+                                                Sign Up
+                                            </Link>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>

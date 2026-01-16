@@ -230,7 +230,7 @@ const Dashboard = () => {
                         />
                         <button
                             onClick={() => navigate('/party')}
-                            className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-3 md:px-4 py-2.5 rounded-xl font-bold text-sm transition-colors whitespace-nowrap"
+                            className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-3 md:px-4 py-2.5 rounded-xl font-bold text-sm transition-colors whitespace-nowrap cursor-pointer "
                         >
                             <BookOpen size={18} />
                             <span className="hidden sm:inline">Khata Book</span>

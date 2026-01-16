@@ -45,7 +45,7 @@ const Verify = () => {
                   <h2 className="text-3xl font-bold text-gray-800 mb-3">
                     Verification Successful!
                   </h2>
-                  <p className="text-green-600 text-lg mb-8">
+                  <p className="text-green-600 font-semibold text-lg mb-8">
                     {successMessage}
                   </p>
                   <Link
