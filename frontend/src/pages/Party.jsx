@@ -75,8 +75,8 @@ const Party = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-10 px-4">
-            <div className="max-w-2xl mx-auto">
+        <div className="min-h-screen bg-gray-50 py-6 px-4 md:px-8">
+            <div className="max-w-6xl mx-auto">
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -149,7 +149,7 @@ const Party = () => {
                         </button>
                     </div>
 
-                    <div className="p-6">
+                    <div className="p-4">
                         {loading ? (
                             <div className="flex justify-center py-8">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
@@ -167,12 +167,12 @@ const Party = () => {
                                 </p>
                             </div>
                         ) : (
-                            <div className="space-y-3">
+                            <div className="divide-y divide-gray-100">
                                 {filteredParties.map((party, index) => (
                                     <div
                                         key={index}
                                         onClick={() => handlePartyClick(party)}
-                                        className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl cursor-pointer transition-all group"
+                                        className="flex items-center justify-between py-3 px-2 hover:bg-gray-50 cursor-pointer transition-all group"
                                     >
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
