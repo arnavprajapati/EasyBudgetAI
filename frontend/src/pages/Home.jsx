@@ -16,8 +16,10 @@ const Home = () => {
 
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [period, setPeriod] = useState('month');
+    const [period, setPeriod] = useState('week');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
     const [summary, setSummary] = useState({
         totalIncome: 0,
         totalExpense: 0,
@@ -41,6 +43,7 @@ const Home = () => {
         if (expenses.length > 0) {
             calculateSummary();
         }
+        setCurrentPage(1); 
     }, [expenses, period]);
 
     const fetchExpenses = async () => {
@@ -121,14 +124,52 @@ const Home = () => {
 
     const categoryColors = {
         'Food & Dining': 'bg-orange-500',
+        'Food': 'bg-orange-500',
+        'Dining': 'bg-orange-600',
         'Travel & Transport': 'bg-blue-500',
+        'Travel': 'bg-blue-500',
+        'Transport': 'bg-cyan-500',
+        'Transportation': 'bg-cyan-500',
         'Shopping & Entertainment': 'bg-pink-500',
+        'Shopping': 'bg-pink-500',
+        'Entertainment': 'bg-fuchsia-500',
         'Housing / Rent': 'bg-purple-500',
-        'Bills & Utilities': 'bg-yellow-500',
+        'Housing': 'bg-purple-500',
+        'Rent': 'bg-violet-500',
+        'Bills & Utilities': 'bg-amber-500',
+        'Bills': 'bg-amber-500',
+        'Utilities': 'bg-yellow-600',
         'Personal & Transfers': 'bg-indigo-500',
+        'Personal': 'bg-indigo-500',
+        'Transfers': 'bg-blue-600',
+        'Miscellaneous': 'bg-rose-500',
+        'Other': 'bg-slate-500',
+        'Healthcare': 'bg-emerald-500',
+        'Health': 'bg-emerald-500',
+        'Medical': 'bg-green-600',
+        'Education': 'bg-blue-600',
+        'Groceries': 'bg-lime-500',
+        'Grocery': 'bg-lime-500',
+        'Fuel': 'bg-yellow-500',
+        'Petrol': 'bg-yellow-500',
+        'Investment': 'bg-violet-600',
+        'Investments': 'bg-violet-600',
+        
+        // Income
         'Salary & Income': 'bg-green-500',
+        'Salary': 'bg-green-500',
+        'Income': 'bg-emerald-600',
         'Refunds & Returns': 'bg-teal-500',
-        'Other': 'bg-gray-500'
+        'Refund': 'bg-teal-500',
+        'Refunds': 'bg-teal-500',
+        'Returns': 'bg-teal-600',
+        'Received from Others': 'bg-sky-500',
+        'Received': 'bg-sky-500',
+        'Bonus': 'bg-yellow-400',
+        'Freelance': 'bg-green-400',
+        'Interest': 'bg-cyan-400',
+        'Dividend': 'bg-purple-400',
+        'Gift': 'bg-pink-400'
     };
 
     if (!telegramLoading && !linked) {
@@ -143,11 +184,11 @@ const Home = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-                            Welcome back, <span className="text-[#387ED1]">{userName}</span>!
+                            Hi, <span className="text-[#387ED1]">{userName}</span>! Here’s your quick summary
                         </h1>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                        <TimeFilter selectedPeriod={period} onPeriodChange={setPeriod} />
+                        <TimeFilter selectedPeriod={period} onPeriodChange={setPeriod} maxPeriod="3months" />
                         <a
                             href="/party"
                             className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-3 md:px-4 py-2.5 rounded-xl font-bold text-sm transition-colors whitespace-nowrap"
@@ -206,7 +247,12 @@ const Home = () => {
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="text-lg font-bold text-gray-800">Recent Transactions</h2>
+                        <h2 className="text-lg font-bold text-gray-800">
+                            Recent Transactions 
+                            <span className="text-gray-400 font-semibold text-sm ml-2">
+                                ({period === 'week' ? 'Last 7 Days' : period === 'month' ? 'Last Month' : 'Last 3 Months'})
+                            </span>
+                        </h2>
                         <a href="/dashboard" className="text-sm text-[#387ED1] font-semibold hover:underline">
                             View All →
                         </a>
@@ -229,7 +275,7 @@ const Home = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {filteredExpenses.slice(0, 15).map((expense, index) => (
+                                    {filteredExpenses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((expense, index) => (
                                         <tr key={expense._id || index} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-8 py-6 text-base text-gray-600 font-semibold whitespace-nowrap">
                                                 {new Date(expense.date).toLocaleDateString('en-IN', {
@@ -260,6 +306,43 @@ const Home = () => {
                                     ))}
                                 </tbody>
                             </table>
+                            
+                            {filteredExpenses.length > itemsPerPage && (
+                                <div className="mt-4 border-t border-gray-100 pt-8 pb-14">
+                                    <div className="text-xs text-center font-bold text-gray-400 mb-3">
+                                        Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredExpenses.length)} of {filteredExpenses.length}
+                                    </div>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <button
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                            className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1 ${currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-blue-400 cursor-pointer'}`}
+                                        >
+                                            ← Prev
+                                        </button>
+                                        {Array.from({ length: Math.ceil(filteredExpenses.length / itemsPerPage) }, (_, i) => i + 1)
+                                            .filter(page => page === 1 || page === Math.ceil(filteredExpenses.length / itemsPerPage) || Math.abs(page - currentPage) <= 1)
+                                            .map((page, idx, arr) => (
+                                                <React.Fragment key={page}>
+                                                    {idx > 0 && arr[idx - 1] !== page - 1 && <span className="text-gray-400">...</span>}
+                                                    <button
+                                                        onClick={() => setCurrentPage(page)}
+                                                        className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${currentPage === page ? 'bg-blue-500 text-white' : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-blue-400 cursor-pointer'}`}
+                                                    >
+                                                        {page}
+                                                    </button>
+                                                </React.Fragment>
+                                            ))}
+                                        <button
+                                            onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredExpenses.length / itemsPerPage), p + 1))}
+                                            disabled={currentPage === Math.ceil(filteredExpenses.length / itemsPerPage)}
+                                            className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1 ${currentPage === Math.ceil(filteredExpenses.length / itemsPerPage) ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-blue-400 cursor-pointer'}`}
+                                        >
+                                            Next →
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

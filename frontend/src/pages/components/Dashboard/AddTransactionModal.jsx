@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, ChevronDown } from 'lucide-react';
 import api from '../../../apiIntercepter';
 import { toast } from 'react-toastify';
 
@@ -10,6 +10,45 @@ const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
         category: 'Miscellaneous',
         type: 'debit'
     });
+    const [categoryOpen, setCategoryOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    const debitCategories = [
+        { value: 'Food & Dining', label: '🍽️ Food & Dining' },
+        { value: 'Travel & Transport', label: '🚗 Travel & Transport' },
+        { value: 'Shopping & Entertainment', label: '🛍️ Shopping & Entertainment' },
+        { value: 'Housing / Rent', label: '🏠 Housing / Rent' },
+        { value: 'Bills & Utilities', label: '📱 Bills & Utilities' },
+        { value: 'Personal & Transfers', label: '💸 Personal & Transfers' },
+        { value: 'Miscellaneous', label: '📦 Miscellaneous' }
+    ];
+
+    const creditCategories = [
+        { value: 'Salary & Income', label: '💼 Salary & Income' },
+        { value: 'Refunds & Returns', label: '↩️ Refunds & Returns' },
+        { value: 'Received from Others', label: '🤝 Received from Others' }
+    ];
+
+    const categories = newExpense.type === 'debit' ? debitCategories : creditCategories;
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setCategoryOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Reset category when type changes
+    useEffect(() => {
+        if (newExpense.type === 'debit') {
+            setNewExpense(prev => ({ ...prev, category: 'Miscellaneous' }));
+        } else {
+            setNewExpense(prev => ({ ...prev, category: 'Salary & Income' }));
+        }
+    }, [newExpense.type]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -22,6 +61,11 @@ const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to add transaction');
         }
+    };
+
+    const getCurrentCategoryLabel = () => {
+        const cat = categories.find(c => c.value === newExpense.category);
+        return cat ? cat.label : categories[0].label;
     };
 
     if (!isOpen) return null;
@@ -99,29 +143,44 @@ const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
 
                         <div>
                             <label className="block text-sm font-bold text-[#828282] mb-2">Category</label>
-                            <select
-                                value={newExpense.category}
-                                onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-                                className="w-full px-4 py-3 border border-[#E0E0E0] rounded-lg font-bold text-[#212529] focus:border-[#4F9CF9] focus:outline-none cursor-pointer bg-white"
-                            >
-                                {newExpense.type === 'debit' ? (
-                                    <>
-                                        <option className="font-bold cursor-pointer" value="Food & Dining">🍽️ Food & Dining</option>
-                                        <option className="font-bold cursor-pointer" value="Travel & Transport">🚗 Travel & Transport</option>
-                                        <option className="font-bold cursor-pointer" value="Shopping & Entertainment">🛍️ Shopping & Entertainment</option>
-                                        <option className="font-bold cursor-pointer" value="Housing / Rent">🏠 Housing / Rent</option>
-                                        <option className="font-bold cursor-pointer" value="Bills & Utilities">📱 Bills & Utilities</option>
-                                        <option className="font-bold cursor-pointer" value="Personal & Transfers">💸 Personal & Transfers</option>
-                                        <option className="font-bold cursor-pointer" value="Miscellaneous">📦 Miscellaneous</option>
-                                    </>
-                                ) : (
-                                    <>
-                                        <option className="font-bold cursor-pointer" value="Salary & Income">💼 Salary & Income</option>
-                                        <option className="font-bold cursor-pointer" value="Refunds & Returns">↩️ Refunds & Returns</option>
-                                        <option className="font-bold cursor-pointer" value="Received from Others">🤝 Received from Others</option>
-                                    </>
+                            <div className="relative" ref={dropdownRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => setCategoryOpen(!categoryOpen)}
+                                    className="w-full flex items-center justify-between px-4 py-3 border-2 border-[#E0E0E0] rounded-lg font-bold text-[#212529] hover:border-[#4F9CF9] transition-all bg-white cursor-pointer"
+                                >
+                                    <span>{getCurrentCategoryLabel()}</span>
+                                    <ChevronDown 
+                                        size={18} 
+                                        className={`text-[#828282] transition-transform ${categoryOpen ? 'rotate-180' : ''}`}
+                                    />
+                                </button>
+
+                                {categoryOpen && (
+                                    <div className="absolute left-0 right-0 bottom-full mb-2 bg-white border-2 border-[#E0E0E0] rounded-lg shadow-xl z-50 overflow-hidden">
+                                        {categories.map((cat) => (
+                                            <button
+                                                key={cat.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    setNewExpense({ ...newExpense, category: cat.value });
+                                                    setCategoryOpen(false);
+                                                }}
+                                                className={`w-full text-left px-4 py-3 font-bold text-sm transition-all cursor-pointer ${
+                                                    newExpense.category === cat.value
+                                                        ? 'bg-[#4F9CF9] text-white'
+                                                        : 'text-[#212529] hover:bg-[#F5F5F5]'
+                                                }`}
+                                            >
+                                                {cat.label}
+                                                {newExpense.category === cat.value && (
+                                                    <span className="float-right">✓</span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
                                 )}
-                            </select>
+                            </div>
                         </div>
 
                         <div className="flex gap-3 pt-4">

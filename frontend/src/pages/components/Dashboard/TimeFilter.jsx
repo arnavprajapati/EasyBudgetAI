@@ -1,17 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-const TimeFilter = ({ selectedPeriod, onPeriodChange }) => {
+const TimeFilter = ({ selectedPeriod, onPeriodChange, maxPeriod }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
-    const periods = [
+    const allPeriods = [
         { value: 'week', label: 'Last 7 Days' },
         { value: 'month', label: 'Last Month' },
         { value: '3months', label: 'Last 3 Months' },
         { value: '6months', label: 'Last 6 Months' },
         { value: 'all', label: 'All Time' }
     ];
+
+    const periods = maxPeriod === '3months' 
+        ? allPeriods.slice(0, 3) 
+        : allPeriods;
 
     useEffect(() => {
         const handleClickOutside = (event) => {

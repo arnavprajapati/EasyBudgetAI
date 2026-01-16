@@ -216,12 +216,12 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white py-16 px-6">
-            <div className="max-w-7xl mx-auto">
+        <div className="min-h-screen bg-white py-6 px-4 md:px-8">
+            <div className="max-w-6xl mx-auto">
 
-                <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <h1 className="text-3xl md:text-5xl font-bold text-[#212529]">
-                        Welcome back, <span className="text-[#4F9CF9]">{user?.name?.split(' ')[0] || 'User'}</span>!
+                <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+                        Spending Insights & Analysis
                     </h1>
                     <div className="flex flex-wrap items-center gap-2 md:gap-3">
                         <TimeFilter
@@ -230,17 +230,17 @@ const Dashboard = () => {
                         />
                         <button
                             onClick={() => navigate('/party')}
-                            className="flex items-center gap-2 bg-purple-600 text-white px-4 md:px-6 py-3 rounded-lg font-bold hover:bg-purple-700 transition-all text-sm shadow-lg cursor-pointer whitespace-nowrap"
+                            className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-3 md:px-4 py-2.5 rounded-xl font-bold text-sm transition-colors whitespace-nowrap"
                         >
-                            <BookOpen size={20} />
+                            <BookOpen size={18} />
                             <span className="hidden sm:inline">Khata Book</span>
                             <span className="sm:hidden">Khata</span>
                         </button>
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-2 bg-[#1E1E1E] text-white px-4 md:px-6 py-3 rounded-lg font-bold hover:bg-[#000000] transition-all text-sm shadow-lg cursor-pointer whitespace-nowrap"
+                            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-3 md:px-4 py-2.5 rounded-xl font-bold text-sm transition-colors cursor-pointer whitespace-nowrap"
                         >
-                            <Plus size={20} />
+                            <Plus size={18} />
                             <span className="hidden sm:inline">Add Transaction</span>
                             <span className="sm:hidden">Add</span>
                         </button>
@@ -261,6 +261,7 @@ const Dashboard = () => {
                     <CategoryPieChart
                         categoryData={categoryData}
                         selectedView={selectedView}
+                        selectedCategory={selectedCategory}
                         onCategorySelect={setSelectedCategory}
                     />
 

@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const CategoryPieChart = ({ categoryData, selectedView, onCategorySelect }) => {
+const CategoryPieChart = ({ categoryData, selectedView, onCategorySelect, selectedCategory }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
@@ -44,66 +44,118 @@ const CategoryPieChart = ({ categoryData, selectedView, onCategorySelect }) => {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-2 border-dashed border-[#E0E0E0] p-6">
+        <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-2 border-dashed border-[#E0E0E0] p-6 overflow-visible">
             <h2 className="text-xl font-bold text-[#212529] mb-6">{getPieChartTitle()}</h2>
 
             {categoryData.length > 0 ? (
                 <>
-                    <div className="relative">
-                        <ResponsiveContainer width="100%" height={320}>
-                            <PieChart>
+                    <div className="relative overflow-visible" style={{ margin: '0 -20px' }}>
+                        <ResponsiveContainer width="100%" height={400} style={{ margin: '0 -20px' }}>
+                            <PieChart width={400} height={400}>
                                 <Pie
                                     data={categoryData}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={0}
-                                    outerRadius={110}
+                                    innerRadius={60}
+                                    outerRadius={100}
                                     dataKey="value"
                                     stroke="#fff"
-                                    strokeWidth={3}
-                                    paddingAngle={3}
-                                    minAngle={15}
-                                    labelLine={{
-                                        stroke: '#bdbdbd',
-                                        strokeWidth: 1.5,
-                                        length: 30,
-                                        length2: 25,
-                                    }}
-                                    label={({ name, value, cx, cy, x, y, index }) => {
+                                    strokeWidth={2}
+                                    paddingAngle={2}
+                                    minAngle={27}
+                                    labelLine={true}
+                                    label={({ cx, cy, midAngle, outerRadius, value, name, index }) => {
+                                        const RADIAN = Math.PI / 180;
+                                        const radius = outerRadius + 35;
+                                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                                        const isRightSide = x > cx;
+                                        const textAnchor = isRightSide ? 'start' : 'end';
                                         const shortName = name.split(' ')[0];
-                                        const textAnchor = x > cx ? 'start' : 'end';
-                                        const yOffset = y + (y > cy ? 12 : -12);
-                                        const xOffset = x + (x > cx ? 10 : -10);
 
                                         return (
-                                            <text
-                                                x={xOffset}
-                                                y={yOffset}
-                                                fill={categoryData[index].color}
-                                                textAnchor={textAnchor}
-                                                dominantBaseline="central"
-                                                style={{
-                                                    fontWeight: 'bold',
-                                                    fontSize: '15px',
-                                                }}
-                                            >
-                                                {`${shortName}: ₹${(value / 1000).toFixed(1)}k`}
-                                            </text>
+                                            <g>
+                                                <line
+                                                    x1={cx + outerRadius * Math.cos(-midAngle * RADIAN)}
+                                                    y1={cy + outerRadius * Math.sin(-midAngle * RADIAN)}
+                                                    x2={x}
+                                                    y2={y}
+                                                    stroke={categoryData[index].color}
+                                                    strokeWidth={2}
+                                                />
+                                                <text
+                                                    x={x + (isRightSide ? 10 : -10)}
+                                                    y={y + 4}
+                                                    fill={categoryData[index].color}
+                                                    textAnchor={textAnchor}
+                                                    style={{
+                                                        fontWeight: 'bold',
+                                                        fontSize: '14px',
+                                                    }}
+                                                >
+                                                    {shortName}
+                                                </text>
+                                            </g>
                                         );
                                     }}
                                 >
-                                    {categoryData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
+                                    {categoryData.map((entry, index) => {
+                                        const isSelected = selectedCategory === 'all' || selectedCategory === entry.name;
+                                        return (
+                                            <Cell 
+                                                key={`cell-${index}`} 
+                                                fill={entry.color} 
+                                                opacity={isSelected ? 1 : 0.3}
+                                                style={{ cursor: 'pointer' }}
+                                                onClick={() => onCategorySelect(selectedCategory === entry.name ? 'all' : entry.name)}
+                                            />
+                                        );
+                                    })}
                                 </Pie>
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: '#fff',
-                                        border: 'none',
-                                        borderRadius: '12px',
-                                        fontWeight: 'bold',
-                                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                                        padding: '12px'
+                                <Tooltip 
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            const data = payload[0];
+                                            const total = categoryData.reduce((sum, cat) => sum + cat.value, 0);
+                                            const percentage = ((data.value / total) * 100).toFixed(1);
+                                            return (
+                                                <div style={{
+                                                    backgroundColor: '#fff',
+                                                    border: 'none',
+                                                    borderRadius: '12px',
+                                                    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                                                    padding: '12px 20px',
+                                                    minWidth: '160px',
+                                                    cursor: 'pointer'
+                                                }}>
+                                                    <p style={{ 
+                                                        fontWeight: 'bold', 
+                                                        fontSize: '14px', 
+                                                        color: data.payload.color,
+                                                        marginBottom: '6px'
+                                                    }}>
+                                                        {data.name}
+                                                    </p>
+                                                    <p style={{ 
+                                                        fontWeight: 'bold', 
+                                                        fontSize: '18px', 
+                                                        color: '#212529',
+                                                        marginBottom: '4px'
+                                                    }}>
+                                                        ₹{data.value.toLocaleString('en-IN')}
+                                                    </p>
+                                                    <p style={{ 
+                                                        fontWeight: '600', 
+                                                        fontSize: '13px', 
+                                                        color: '#828282'
+                                                    }}>
+                                                        {percentage}% of total
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
                                     }}
                                 />
                             </PieChart>
@@ -148,17 +200,16 @@ const CategoryPieChart = ({ categoryData, selectedView, onCategorySelect }) => {
                             <div className="text-xs text-center font-bold text-[#828282] mb-3">
                                 Showing {startIndex + 1}-{Math.min(endIndex, categoryData.length)} of {categoryData.length}
                             </div>
-                            
+
                             <div className="flex items-center justify-center">
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={goToPreviousPage}
                                         disabled={currentPage === 1}
-                                        className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1 ${
-                                            currentPage === 1
-                                                ? 'bg-[#F5F5F5] text-[#BDBDBD] cursor-not-allowed'
-                                                : 'bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer'
-                                        }`}
+                                        className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1 ${currentPage === 1
+                                            ? 'bg-[#F5F5F5] text-[#BDBDBD] cursor-not-allowed'
+                                            : 'bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer'
+                                            }`}
                                     >
                                         <ChevronLeft size={14} />
                                         Prev
@@ -185,11 +236,10 @@ const CategoryPieChart = ({ categoryData, selectedView, onCategorySelect }) => {
                                                 <button
                                                     key={pageNum}
                                                     onClick={() => goToPage(pageNum)}
-                                                    className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
-                                                        currentPage === pageNum
-                                                            ? 'bg-[#4F9CF9] text-white'
-                                                            : 'bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer'
-                                                    }`}
+                                                    className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${currentPage === pageNum
+                                                        ? 'bg-[#4F9CF9] text-white'
+                                                        : 'bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer'
+                                                        }`}
                                                 >
                                                     {pageNum}
                                                 </button>
@@ -214,11 +264,10 @@ const CategoryPieChart = ({ categoryData, selectedView, onCategorySelect }) => {
                                     <button
                                         onClick={goToNextPage}
                                         disabled={currentPage === totalPages}
-                                        className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1 ${
-                                            currentPage === totalPages
-                                                ? 'bg-[#F5F5F5] text-[#BDBDBD] cursor-not-allowed'
-                                                : 'bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer'
-                                        }`}
+                                        className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1 ${currentPage === totalPages
+                                            ? 'bg-[#F5F5F5] text-[#BDBDBD] cursor-not-allowed'
+                                            : 'bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer'
+                                            }`}
                                     >
                                         Next
                                         <ChevronRight size={14} />

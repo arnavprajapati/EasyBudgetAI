@@ -74,12 +74,12 @@ function Navbar() {
                                 <div className="flex items-center space-x-2 md:space-x-4">
                                     <Link
                                         to="/profile"
-                                        className="hidden sm:flex items-center bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100 hover:bg-blue-100 transition-colors"
+                                        className="hidden sm:flex items-center gap-2 bg-white px-4 py-2 rounded-xl border-2 border-gray-200 hover:border-[#387ED1] hover:shadow-md transition-all"
                                     >
-                                        <div className="w-5 h-5 bg-[#387ED1] rounded-full flex items-center justify-center mr-2">
-                                            <User size={12} className="text-white" />
+                                        <div className="w-8 h-8 bg-gradient-to-br from-[#387ED1] to-[#5a9de8] rounded-full flex items-center justify-center shadow-sm">
+                                            <User size={16} className="text-white" />
                                         </div>
-                                        <span className="text-xs font-bold text-[#387ED1]">
+                                        <span className="text-sm font-bold text-gray-700">
                                             {user?.name?.split(' ')[0] || 'User'}
                                         </span>
                                     </Link>

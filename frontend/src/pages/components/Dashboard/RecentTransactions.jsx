@@ -11,7 +11,7 @@ const RecentTransactions = ({
     const [isOpen, setIsOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const dropdownRef = useRef(null);
-    const itemsPerPage = 6;
+    const itemsPerPage = 7;
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -177,8 +177,8 @@ const RecentTransactions = ({
             </div>
 
             {filteredExpenses.length > 0 && (
-                <div className="mt-6 border-t-2 border-[#F0F0F0] pt-4">
-                    <div className="text-sm text-center font-bold text-[#828282] mb-3">
+                <div className="mt-4 border-t-2 border-[#F0F0F0] pt-4">
+                    <div className="text-xs text-center font-bold text-[#828282] mb-3">
                         Showing {startIndex + 1}-{Math.min(endIndex, filteredExpenses.length)} of {filteredExpenses.length}
                     </div>
                     
@@ -187,14 +187,14 @@ const RecentTransactions = ({
                             <button
                                 onClick={goToPreviousPage}
                                 disabled={currentPage === 1}
-                                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-1 ${
+                                className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1 ${
                                     currentPage === 1
                                         ? 'bg-[#F5F5F5] text-[#BDBDBD] cursor-not-allowed'
                                         : 'bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer'
                                 }`}
                             >
-                                <ChevronLeft size={16} />
-                                Previous
+                                <ChevronLeft size={14} />
+                                Prev
                             </button>
 
                             <div className="flex items-center gap-1">
@@ -202,12 +202,12 @@ const RecentTransactions = ({
                                     <>
                                         <button
                                             onClick={() => goToPage(1)}
-                                            className="px-4 py-2 rounded-lg font-bold text-sm transition-all bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer"
+                                            className="px-3 py-1.5 rounded-lg font-bold text-xs transition-all bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer"
                                         >
                                             1
                                         </button>
                                         {currentPage > 3 && (
-                                            <span className="px-2 text-[#828282] font-bold">...</span>
+                                            <span className="px-1 text-[#828282] font-bold text-xs">...</span>
                                         )}
                                     </>
                                 )}
@@ -218,7 +218,7 @@ const RecentTransactions = ({
                                         <button
                                             key={pageNum}
                                             onClick={() => goToPage(pageNum)}
-                                            className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                                            className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
                                                 currentPage === pageNum
                                                     ? 'bg-[#4F9CF9] text-white'
                                                     : 'bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer'
@@ -232,11 +232,11 @@ const RecentTransactions = ({
                                 {currentPage < totalPages - 1 && (
                                     <>
                                         {currentPage < totalPages - 2 && (
-                                            <span className="px-2 text-[#828282] font-bold">...</span>
+                                            <span className="px-1 text-[#828282] font-bold text-xs">...</span>
                                         )}
                                         <button
                                             onClick={() => goToPage(totalPages)}
-                                            className="px-4 py-2 rounded-lg font-bold text-sm transition-all bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer"
+                                            className="px-3 py-1.5 rounded-lg font-bold text-xs transition-all bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer"
                                         >
                                             {totalPages}
                                         </button>
@@ -247,14 +247,14 @@ const RecentTransactions = ({
                             <button
                                 onClick={goToNextPage}
                                 disabled={currentPage === totalPages}
-                                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-1 ${
+                                className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1 ${
                                     currentPage === totalPages
                                         ? 'bg-[#F5F5F5] text-[#BDBDBD] cursor-not-allowed'
                                         : 'bg-white border-2 border-[#E0E0E0] text-[#212529] hover:border-[#4F9CF9] cursor-pointer'
                                 }`}
                             >
                                 Next
-                                <ChevronRight size={16} />
+                                <ChevronRight size={14} />
                             </button>
                         </div>
                     </div>
