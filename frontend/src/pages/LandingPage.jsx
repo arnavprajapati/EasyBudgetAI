@@ -144,16 +144,16 @@ function LandingPage() {
     return (
         <>
             <div className="min-h-screen relative overflow-hidden bg-white">
-                <nav className="absolute top-4 left-0 right-0 z-50">
-                    <div className="max-w-7xl mx-auto px-8 py-6">
+                <nav className="absolute top-2 md:top-4 left-0 right-0 z-50">
+                    <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 md:py-6">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                                <div className="bg-[#387ED1] p-2 rounded-xl">
-                                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="flex items-center space-x-2 md:space-x-3">
+                                <div className="bg-[#387ED1] p-1.5 md:p-2 rounded-lg md:rounded-xl">
+                                    <svg className="w-5 h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                     </svg>
                                 </div>
-                                <span className="text-2xl font-extrabold text-gray-900">
+                                <span className="text-lg md:text-2xl font-extrabold text-gray-900">
                                     Smart<span className="text-[#387ED1]">Khata</span>
                                 </span>
                             </div>
@@ -173,16 +173,16 @@ function LandingPage() {
                                 </button>
                             </div>
 
-                            <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-2 md:space-x-4">
                                 <button
                                     onClick={() => openAuthModal('login')}
-                                    className="text-base font-bold text-gray-600 hover:text-[#387ED1] cursor-pointer px-4 py-2"
+                                    className="hidden sm:block text-sm md:text-base font-bold text-gray-600 hover:text-[#387ED1] cursor-pointer px-2 md:px-4 py-2"
                                 >
                                     Login
                                 </button>
                                 <button
                                     onClick={() => openAuthModal('register')}
-                                    className="bg-[#387ED1] text-white text-base font-bold px-6 py-2.5 rounded-xl shadow-md hover:shadow-blue-200 transition-all cursor-pointer"
+                                    className="bg-[#387ED1] text-white text-sm md:text-base font-bold px-4 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl shadow-md hover:shadow-blue-200 transition-all cursor-pointer"
                                 >
                                     Sign Up
                                 </button>
@@ -191,14 +191,14 @@ function LandingPage() {
                     </div>
                 </nav>
 
-                <div className="flex flex-col items-center justify-center max-w-7xl mx-auto px-8 h-screen relative z-10">
-                    <div className="flex flex-col md:flex-row items-center justify-between w-full pb-50 pt-10 md:pt-50">
+                <div className="flex flex-col items-center justify-center max-w-7xl mx-auto px-4 md:px-8 min-h-screen relative z-10">
+                    <div className="flex flex-col md:flex-row items-center justify-between w-full pt-20 md:pt-32 pb-16 md:pb-35">
                         <div className="flex-1 max-w-xl text-left">
-                            <div className="flex items-start justify-between">
-                                <h1 className="text-5xl md:text-7xl font-bold mb-4 leading-tight">
+                            <div className="flex items-start gap-10 mb-4">
+                                <h1 className="text-3xl sm:text-4xl md:text-7xl font-bold leading-tight">
                                     Take Control <br />of <span className='text-[#387ED1]'>Your Money</span>
                                 </h1>
-                                <div className="w-32 h-32 z-10 md:hidden mt-4 ml-4 flex-shrink-0">
+                                <div className="w-20 h-20 sm:w-24 sm:h-24 z-10 md:hidden flex-shrink-0 mt-1">
                                     <img
                                         src="https://res.cloudinary.com/dzz1wmydl/image/upload/v1762864750/unnamed_1_dick2v.jpg"
                                         alt="Small Visual"
@@ -206,19 +206,19 @@ function LandingPage() {
                                     />
                                 </div>
                             </div>
-                            <p className="text-gray-600 font-bold text-xl mb-8">
+                            <p className="text-gray-600 font-bold text-sm sm:text-base md:text-xl mb-5 md:mb-8 pr-2">
                                 Track your expenses effortlessly via Telegram. Manage Khata with friends. Stay in control.
                             </p>
-                            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 max-w-sm">
+                            <div className="flex flex-row space-x-3 sm:space-x-4 max-w-sm">
                                 <button
                                     onClick={() => openAuthModal('register')}
-                                    className="flex-1 text-lg py-3 rounded-lg font-semibold text-white cursor-pointer bg-[#387ED1]  transition duration-200 shadow-lg"
+                                    className="flex-1 text-sm sm:text-base md:text-lg py-2.5 md:py-3 rounded-lg font-semibold text-white cursor-pointer bg-[#387ED1] transition duration-200 shadow-lg"
                                 >
                                     Get Started Free
                                 </button>
                                 <button
                                     onClick={() => scrollToSection('features')}
-                                    className="flex-1 text-lg py-3 rounded-lg font-semibold text-gray-800 cursor-pointer bg-gray-200 border border-gray-300 hover:bg-gray-300 transition duration-200 shadow-lg"
+                                    className="flex-1 text-sm sm:text-base md:text-lg py-2.5 md:py-3 rounded-lg font-semibold text-gray-800 cursor-pointer bg-gray-200 border border-gray-300 hover:bg-gray-300 transition duration-200 shadow-lg"
                                 >
                                     Learn More
                                 </button>
@@ -280,22 +280,22 @@ function LandingPage() {
                 </div>
             </section>
 
-            <section id="telegram" className="py-20 bg-white">
-                <div className="max-w-7xl mx-auto px-8">
-                    <div className="text-center mb-16">
-                        <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-base font-bold mb-4">
+            <section id="telegram" className="py-12 md:py-20 bg-white">
+                <div className="max-w-7xl mx-auto px-4 md:px-8">
+                    <div className="text-center mb-8 md:mb-16">
+                        <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-3 md:px-4 py-2 rounded-full text-sm md:text-base font-bold mb-4">
                             <span>📱</span> Telegram Integration
                         </div>
-                        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-800 mb-3 md:mb-4">
                             Track Expenses via <span className="text-[#0088cc]">Telegram</span>
                         </h2>
-                        <p className="text-xl font-semibold text-gray-600 max-w-2xl mx-auto">
+                        <p className="text-base md:text-xl font-semibold text-gray-600 max-w-2xl mx-auto px-2">
                             No app needed! Just message our bot and your expenses are saved automatically
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-                        <div className="bg-gradient-to-br from-[#0088cc] to-[#0066aa] rounded-3xl p-8 shadow-2xl text-white">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-12 items-start">
+                        <div className="bg-gradient-to-br from-[#0088cc] to-[#0066aa] rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-2xl text-white">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                                     <span className="text-2xl">🤖</span>
@@ -370,42 +370,42 @@ function LandingPage() {
                 </div>
             </section>
 
-            <section id="dashboard" className="py-20 bg-gradient-to-b from-[#387ED1] to-[#2563eb] ">
-                <div className="max-w-7xl mx-auto px-8 ">
-                    <div className="text-center mb-16">
-                        <div className="inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-full text-sm font-bold mb-4">
+            <section id="dashboard" className="py-12 md:py-20 bg-gradient-to-b from-[#387ED1] to-[#2563eb]">
+                <div className="max-w-7xl mx-auto px-4 md:px-8">
+                    <div className="text-center mb-8 md:mb-16">
+                        <div className="inline-flex items-center gap-2 bg-white/20 text-white px-3 md:px-4 py-2 rounded-full text-xs md:text-sm font-bold mb-4">
                             <span>📊</span> Dashboard Preview
                         </div>
-                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white mb-3 md:mb-4">
                             Powerful <span className="text-blue-200">Insights</span> at a Glance
                         </h2>
-                        <p className="text-xl font-semibold text-blue-100 max-w-2xl mx-auto">
+                        <p className="text-base md:text-xl font-semibold text-blue-100 max-w-2xl mx-auto px-2">
                             Beautiful analytics to understand your spending patterns
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 cursor-pointer lg:grid-cols-4 gap-6 mb-12">
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8 md:mb-12">
                         {dashboardFeatures.map((feature, idx) => (
-                            <div key={idx} className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl ">
-                                <div className="text-4xl mb-4">{feature.icon}</div>
-                                <h3 className="text-xl font-bold text-gray-800 mb-2">{feature.title}</h3>
-                                <p className="text-gray-600 font-semibold text-base">{feature.desc}</p>
+                            <div key={idx} className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-xl hover:shadow-2xl">
+                                <div className="text-2xl md:text-4xl mb-2 md:mb-4">{feature.icon}</div>
+                                <h3 className="text-sm md:text-xl font-bold text-gray-800 mb-1 md:mb-2">{feature.title}</h3>
+                                <p className="text-gray-600 font-semibold text-xs md:text-base">{feature.desc}</p>
                             </div>
                         ))}
                     </div>
 
-                    <div className="bg-white rounded-3xl p-8 shadow-xl">
-                        <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+                    <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-xl">
+                        <h3 className="text-lg md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 text-center">
                             🏷️ Smart Category Detection
                         </h3>
-                        <div className="grid grid-cols-2 cursor-pointer md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
                             {categories.map((cat, idx) => (
-                                <div key={idx} className="bg-gray-50 rounded-2xl p-4 text-center hover:bg-gray-100 transition-all group border border-gray-100">
-                                    <div className={`w-14 h-14 ${cat.color} rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg`}>
-                                        <span className="text-2xl">{cat.icon}</span>
+                                <div key={idx} className="bg-gray-50 rounded-xl md:rounded-2xl p-2 md:p-4 text-center hover:bg-gray-100 transition-all group border border-gray-100">
+                                    <div className={`w-10 h-10 md:w-14 md:h-14 ${cat.color} rounded-lg md:rounded-xl flex items-center justify-center mx-auto mb-2 md:mb-3 shadow-lg`}>
+                                        <span className="text-lg md:text-2xl">{cat.icon}</span>
                                     </div>
-                                    <h4 className="text-gray-800 font-bold text-sm mb-1">{cat.name}</h4>
-                                    <p className="text-gray-500 text-xs font-bold truncate">{cat.keywords}</p>
+                                    <h4 className="text-gray-800 font-bold text-xs md:text-sm mb-0.5 md:mb-1">{cat.name}</h4>
+                                    <p className="text-gray-500 text-[10px] md:text-xs font-bold truncate">{cat.keywords}</p>
                                 </div>
                             ))}
                         </div>
@@ -413,40 +413,60 @@ function LandingPage() {
                 </div>
             </section>
 
-            <section id="how-it-works" className="py-20 bg-gray-50">
-                <div className="max-w-7xl mx-auto px-8">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+            <section id="how-it-works" className="py-12 md:py-20 bg-gray-50">
+                <div className="max-w-7xl mx-auto px-4 md:px-8">
+                    <div className="text-center mb-8 md:mb-16">
+                        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-800 mb-3 md:mb-4">
                             How It Works
                         </h2>
-                        <p className="text-xl font-semibold text-gray-600 max-w-2xl mx-auto">
+                        <p className="text-base md:text-xl font-semibold text-gray-600 max-w-2xl mx-auto px-2">
                             Get started in minutes with our simple 4-step process
                         </p>
                     </div>
                     <div className="relative">
-                        <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-[#387ED1] to-[#2563eb]"></div>
-                        <div className="space-y-12">
+                        <div className="absolute left-6 md:left-1/2 transform md:-translate-x-1/2 h-full w-1 bg-gradient-to-b from-[#387ED1] to-[#2563eb]"></div>
+                        <div className="space-y-6 md:space-y-12">
                             {steps.map((step, index) => (
-                                <div
-                                    key={index}
-                                    className={`flex flex-col md:flex-row items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}
-                                >
-                                    <div className={`flex-1 font-semibold ${index % 2 === 0 ? 'md:text-right md:pr-12' : 'md:text-left md:pl-12'}`}>
-                                        <div className="bg-white rounded-2xl  p-8 shadow-lg hover:shadow-xl transition-all duration-300">
-                                            <h3 className="text-3xl font-bold text-gray-800 mb-3">
-                                                {step.title}
-                                            </h3>
-                                            <p className="text-gray-600 text-lg font-semibold leading-relaxed">
-                                                {step.description}
-                                            </p>
+                                <div key={index} className="relative flex items-start md:items-center">
+                                    <div className="md:hidden flex items-start w-full">
+                                        <div className="relative z-10 flex-shrink-0">
+                                            <div className="w-12 h-12 bg-gradient-to-br from-[#387ED1] to-[#2563eb] rounded-full flex items-center justify-center shadow-xl">
+                                                <span className="text-white text-base font-bold">{step.number}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 ml-4">
+                                            <div className="bg-white rounded-xl p-4 shadow-lg">
+                                                <h3 className="text-lg font-bold text-gray-800 mb-2">{step.title}</h3>
+                                                <p className="text-gray-600 text-sm font-semibold leading-relaxed">{step.description}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="relative z-10 my-6 md:my-0">
-                                        <div className="w-20 h-20 bg-gradient-to-br from-[#387ED1] to-[#2563eb] rounded-full flex items-center justify-center shadow-xl">
-                                            <span className="text-white text-2xl font-bold">{step.number}</span>
+                                    
+                                    <div className="hidden md:flex md:items-center md:w-full">
+                                        <div className="flex-1 pr-12 text-right">
+                                            {index % 2 === 0 && (
+                                                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 inline-block text-left max-w-md ml-auto">
+                                                    <h3 className="text-3xl font-bold text-gray-800 mb-3">{step.title}</h3>
+                                                    <p className="text-gray-600 text-lg font-semibold leading-relaxed">{step.description}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="relative z-10 flex-shrink-0">
+                                            <div className="w-20 h-20 bg-gradient-to-br from-[#387ED1] to-[#2563eb] rounded-full flex items-center justify-center shadow-xl">
+                                                <span className="text-white text-2xl font-bold">{step.number}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex-1 pl-12 text-left">
+                                            {index % 2 !== 0 && (
+                                                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 inline-block max-w-md">
+                                                    <h3 className="text-3xl font-bold text-gray-800 mb-3">{step.title}</h3>
+                                                    <p className="text-gray-600 text-lg font-semibold leading-relaxed">{step.description}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    <div className="flex-1"></div>
                                 </div>
                             ))}
                         </div>
@@ -454,20 +474,20 @@ function LandingPage() {
                 </div>
             </section>
 
-            <section id="khata" className="py-20 bg-white">
-                <div className="max-w-7xl mx-auto px-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <section id="khata" className="py-12 md:py-20 bg-white">
+                <div className="max-w-7xl mx-auto px-4 md:px-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-12 items-center">
                         <div>
-                            <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-sm font-bold mb-4">
+                            <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-3 md:px-4 py-2 rounded-full text-xs md:text-sm font-bold mb-4">
                                 <span>📒</span> Khata Book
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
+                            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-800 mb-4 md:mb-6">
                                 Track Lending & <span className="text-purple-600">Borrowing</span>
                             </h2>
-                            <p className="text-xl font-semibold text-gray-600 mb-8">
+                            <p className="text-base md:text-xl font-semibold text-gray-600 mb-6 md:mb-8">
                                 Never forget who owes you money or whom you owe. Keep clean records with friends and family.
                             </p>
-                            <div className="space-y-4">
+                            <div className="space-y-3 md:space-y-4">
                                 <div className="flex items-center gap-4 bg-green-50 rounded-xl p-4 border border-green-200">
                                     <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
                                         <span className="text-2xl">💚</span>
@@ -568,44 +588,44 @@ function LandingPage() {
                 </div>
             </section>
 
-            <footer className="bg-gray-900 text-white py-12">
-                <div className="max-w-7xl mx-auto px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                        <div>
-                            <div className="flex items-center space-x-2 mb-4">
-                                <div className="bg-[#387ED1] p-2 rounded-xl">
-                                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <footer className="bg-gray-900 text-white py-8 md:py-20">
+                <div className="max-w-7xl mx-auto px-4 md:px-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+                        <div className="col-span-2 md:col-span-1 mb-4 md:mb-0">
+                            <div className="flex items-center space-x-2 mb-2 md:mb-4">
+                                <div className="bg-[#387ED1] p-1.5 md:p-2 rounded-lg md:rounded-xl">
+                                    <svg className="w-5 h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                     </svg>
                                 </div>
-                                <span className="text-2xl font-extrabold text-white">
+                                <span className="text-xl md:text-2xl font-extrabold text-white">
                                     Smart<span className="text-[#387ED1]">Khata</span>
                                 </span>
                             </div>
-                            <p className="text-gray-400 font-semibold">
+                            <p className="text-gray-400 font-semibold text-sm md:text-base">
                                 Your smart companion for financial freedom.
                             </p>
                         </div>
                         <div>
-                            <h4 className="font-bold text-lg mb-4">Features</h4>
-                            <ul className="space-y-2 text-gray-400">
-                                <li><button onClick={() => scrollToSection('telegram')} className="hover:text-white cursor-pointer transition font-semibold font-semibold">Telegram Bot</button></li>
-                                <li><button onClick={() => scrollToSection('dashboard')} className="hover:text-white cursor-pointer transition font-semibold font-semibold">Dashboard</button></li>
-                                <li><button onClick={() => scrollToSection('khata')} className="hover:text-white cursor-pointer transition font-semibold font-semibold">Khata Book</button></li>
+                            <h4 className="font-bold text-sm md:text-lg mb-2 md:mb-4">Features</h4>
+                            <ul className="space-y-1 md:space-y-2 text-gray-400 text-sm md:text-base">
+                                <li><button onClick={() => scrollToSection('telegram')} className="hover:text-white cursor-pointer transition font-semibold">Telegram Bot</button></li>
+                                <li><button onClick={() => scrollToSection('dashboard')} className="hover:text-white cursor-pointer transition font-semibold">Dashboard</button></li>
+                                <li><button onClick={() => scrollToSection('khata')} className="hover:text-white cursor-pointer transition font-semibold">Khata Book</button></li>
                             </ul>
                         </div>
                         <div>
-                            <h4 className="font-bold text-lg mb-4">Quick Links</h4>
-                            <ul className="space-y-2 text-gray-400">
+                            <h4 className="font-bold text-sm md:text-lg mb-2 md:mb-4">Quick Links</h4>
+                            <ul className="space-y-1 md:space-y-2 text-gray-400 text-sm md:text-base">
                                 <li><button onClick={() => scrollToSection('features')} className="hover:text-white cursor-pointer transition font-semibold">Features</button></li>
                                 <li><button onClick={() => scrollToSection('how-it-works')} className="hover:text-white cursor-pointer transition font-semibold">How It Works</button></li>
                             </ul>
                         </div>
-                        <div>
-                            <h4 className="font-bold text-lg mb-4">Get Started</h4>
+                        <div className="col-span-2 md:col-span-1 mt-2 md:mt-0">
+                            <h4 className="font-bold text-sm md:text-lg mb-2 md:mb-4">Get Started</h4>
                             <button
                                 onClick={() => openAuthModal('register')}
-                                className="w-full py-3 bg-[#387ED1] text-white rounded-lg font-semibold  transition cursor-pointer"
+                                className="w-full py-2 md:py-3 bg-[#387ED1] text-white rounded-lg font-semibold text-sm md:text-base transition cursor-pointer"
                             >
                                 Sign Up Now
                             </button>
