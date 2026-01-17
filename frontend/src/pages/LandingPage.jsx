@@ -203,9 +203,12 @@ function LandingPage() {
                                 </h1>
                                 <div className="w-20 h-20 sm:w-24 sm:h-24 z-10 md:hidden flex-shrink-0 mt-1">
                                     <img
-                                        src="https://res.cloudinary.com/dzz1wmydl/image/upload/v1762864750/unnamed_1_dick2v.jpg"
+                                        src="https://res.cloudinary.com/dzz1wmydl/image/upload/w_96,q_auto,f_auto/v1762864750/unnamed_1_dick2v.jpg"
                                         alt="Small Visual"
                                         className="w-full h-full object-contain transform rotate-12"
+                                        width="96"
+                                        height="96"
+                                        loading="lazy"
                                     />
                                 </div>
                             </div>
@@ -229,9 +232,12 @@ function LandingPage() {
                         </div>
                         <div className="hidden md:flex md:flex-1 justify-center items-center mt-10 md:mt-0">
                             <img
-                                src="https://res.cloudinary.com/dzz1wmydl/image/upload/v1762864750/unnamed_1_dick2v.jpg"
+                                src="https://res.cloudinary.com/dzz1wmydl/image/upload/w_512,q_auto,f_auto/v1762864750/unnamed_1_dick2v.jpg"
                                 alt="Landing Visual"
                                 className="w-full max-w-lg h-auto object-contain transform -rotate-3 hover:rotate-0 transition-transform duration-500"
+                                fetchpriority="high"
+                                width="512"
+                                height="512"
                             />
                         </div>
                     </div>
