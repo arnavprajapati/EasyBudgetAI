@@ -145,7 +145,7 @@ function LandingPage() {
     ];
 
     return (
-        <>
+        <main role="main">
             <div className="min-h-screen relative overflow-hidden bg-white">
                 <nav className="absolute top-2 md:top-2 left-0 right-0 z-50">
                     <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 md:py-6">
@@ -305,7 +305,7 @@ function LandingPage() {
                                 </div>
                                 <div>
                                     <h3 className="text-2xl font-bold">Bot Commands</h3>
-                                    <p className="text-blue-100 text-bas font-semibold">Quick actions at your fingertips</p>
+                                    <p className="text-blue-200 text-bas font-semibold">Quick actions at your fingertips</p>
                                 </div>
                             </div>
                             <div className="space-y-3 cursor-pointer">
@@ -346,7 +346,7 @@ function LandingPage() {
                                 <h4 className="text-lg font-bold text-gray-800 mb-2">
                                     {activeTab === 'expenses' ? '📝 Just type naturally:' : '💚 Track your income:'}
                                 </h4>
-                                <p className="text-sm text-gray-500 font-semibold mb-4">
+                                <p className="text-sm text-gray-700 font-semibold mb-4">
                                     🤖 AI automatically detects category from your natural language
                                 </p>
                                 <div className="space-y-3">
@@ -364,7 +364,7 @@ function LandingPage() {
                                         </div>
                                     ))}
                                 </div>
-                                <p className="mt-4 text-sm text-gray-500 font-semibold text-center">
+                                <p className="mt-4 text-sm text-gray-700 font-semibold text-center">
                                     ✨ AI auto-detects the category from your message
                                 </p>
                             </div>
@@ -398,17 +398,17 @@ function LandingPage() {
                     </div>
 
                     <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-xl">
-                        <h3 className="text-lg md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 text-center">
+                        <h4 className="text-lg md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 text-center">
                             🏷️ Smart Category Detection
-                        </h3>
+                        </h4>
                         <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
                             {categories.map((cat, idx) => (
                                 <div key={idx} className="bg-gray-50 rounded-xl md:rounded-2xl p-2 md:p-4 text-center hover:bg-gray-100 transition-all group border border-gray-100">
                                     <div className={`w-10 h-10 md:w-14 md:h-14 ${cat.color} rounded-lg md:rounded-xl flex items-center justify-center mx-auto mb-2 md:mb-3 shadow-lg`}>
                                         <span className="text-lg md:text-2xl">{cat.icon}</span>
                                     </div>
-                                    <h4 className="text-gray-800 font-bold text-xs md:text-sm mb-0.5 md:mb-1">{cat.name}</h4>
-                                    <p className="text-gray-500 text-[10px] md:text-xs font-bold truncate">{cat.keywords}</p>
+                                    <h5 className="text-gray-800 font-bold text-xs md:text-sm mb-0.5 md:mb-1">{cat.name}</h5>
+                                    <p className="text-gray-700 text-[10px] md:text-xs font-bold truncate">{cat.keywords}</p>
                                 </div>
                             ))}
                         </div>
@@ -439,8 +439,8 @@ function LandingPage() {
                                         </div>
                                         <div className="flex-1 ml-4">
                                             <div className="bg-white rounded-xl p-4 shadow-lg">
-                                                <h3 className="text-lg font-bold text-gray-800 mb-2">{step.title}</h3>
-                                                <p className="text-gray-600 text-sm font-semibold leading-relaxed">{step.description}</p>
+                                                <h4 className="text-lg font-bold text-gray-800 mb-2">{step.title}</h4>
+                                                <p className="text-gray-700 text-sm font-semibold leading-relaxed">{step.description}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -449,8 +449,8 @@ function LandingPage() {
                                         <div className="flex-1 pr-12 text-right">
                                             {index % 2 === 0 && (
                                                 <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 inline-block text-left max-w-md ml-auto">
-                                                    <h3 className="text-3xl font-bold text-gray-800 mb-3">{step.title}</h3>
-                                                    <p className="text-gray-600 text-lg font-semibold leading-relaxed">{step.description}</p>
+                                                    <h4 className="text-3xl font-bold text-gray-800 mb-3">{step.title}</h4>
+                                                    <p className="text-gray-700 text-lg font-semibold leading-relaxed">{step.description}</p>
                                                 </div>
                                             )}
                                         </div>
@@ -464,8 +464,8 @@ function LandingPage() {
                                         <div className="flex-1 pl-12 text-left">
                                             {index % 2 !== 0 && (
                                                 <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 inline-block max-w-md">
-                                                    <h3 className="text-3xl font-bold text-gray-800 mb-3">{step.title}</h3>
-                                                    <p className="text-gray-600 text-lg font-semibold leading-relaxed">{step.description}</p>
+                                                    <h4 className="text-3xl font-bold text-gray-800 mb-3">{step.title}</h4>
+                                                    <p className="text-gray-700 text-lg font-semibold leading-relaxed">{step.description}</p>
                                                 </div>
                                             )}
                                         </div>
@@ -496,8 +496,8 @@ function LandingPage() {
                                         <span className="text-2xl">💚</span>
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-green-800">To Receive</h4>
-                                        <p className="text-green-600 text-sm font-semibold">Track money others owe you</p>
+                                        <h5 className="font-bold text-green-800">To Receive</h5>
+                                        <p className="text-green-700 text-sm font-semibold">Track money others owe you</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4 bg-red-50 rounded-xl p-4 border border-red-200">
@@ -505,27 +505,27 @@ function LandingPage() {
                                         <span className="text-2xl">❤️</span>
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-red-800">To Give</h4>
-                                        <p className="text-red-600 text-sm font-semibold">Track money you owe others</p>
+                                        <h5 className="font-bold text-red-800">To Give</h5>
+                                        <p className="text-red-700 text-sm font-semibold">Track money you owe others</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div className="relative">
                             <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
-                                <h3 className="text-2xl font-bold text-gray-800 mb-6">Example Party Entries</h3>
+                                <h4 className="text-2xl font-bold text-gray-800 mb-6">Example Party Entries</h4>
                                 <div className="space-y-4">
                                     <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center border border-gray-100 hover:shadow-md transition-all ">
                                         <div className="flex items-center gap-3 cursor-pointer">
                                             <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">R</div>
                                             <div>
                                                 <p className="text-gray-800 font-bold">Rahul</p>
-                                                <p className="text-gray-500 text-xs font-semibold">3 transactions</p>
+                                                <p className="text-gray-700 text-xs font-semibold">3 transactions</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-green-600 font-bold">+₹5,000</p>
-                                            <p className="text-gray-500 text-xs font-semibold">Will Receive</p>
+                                            <p className="text-green-700 font-bold">+₹5,000</p>
+                                            <p className="text-gray-700 text-xs font-semibold">Will Receive</p>
                                         </div>
                                     </div>
                                     <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center border border-gray-100 hover:shadow-md transition-all ">
@@ -533,12 +533,12 @@ function LandingPage() {
                                             <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white font-bold">A</div>
                                             <div>
                                                 <p className="text-gray-800 font-bold">Amit</p>
-                                                <p className="text-gray-500 text-xs font-semibold">2 transactions</p>
+                                                <p className="text-gray-700 text-xs font-semibold">2 transactions</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-red-600 font-bold">-₹2,000</p>
-                                            <p className="text-gray-500 text-xs font-semibold">Will Give</p>
+                                            <p className="text-red-700 font-bold">-₹2,000</p>
+                                            <p className="text-gray-700 text-xs font-semibold">Will Give</p>
                                         </div>
                                     </div>
                                     <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center border border-gray-100 hover:shadow-md transition-all ">
@@ -546,12 +546,12 @@ function LandingPage() {
                                             <div className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">P</div>
                                             <div>
                                                 <p className="text-gray-800 font-bold">Priya</p>
-                                                <p className="text-gray-500 text-xs font-semibold">1 transaction</p>
+                                                <p className="text-gray-700 text-xs font-semibold">1 transaction</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-gray-600 font-bold">₹0</p>
-                                            <p className="text-gray-500 text-xs font-semibold">Settled</p>
+                                            <p className="text-gray-700 font-bold">₹0</p>
+                                            <p className="text-gray-700 text-xs font-semibold">Settled</p>
                                         </div>
                                     </div>
                                 </div>
@@ -610,7 +610,7 @@ function LandingPage() {
                             </p>
                         </div>
                         <div>
-                            <h4 className="font-bold text-sm md:text-lg mb-2 md:mb-4">Features</h4>
+                            <h3 className="font-bold text-sm md:text-lg mb-2 md:mb-4">Features</h3>
                             <ul className="space-y-1 md:space-y-2 text-gray-400 text-sm md:text-base">
                                 <li><button onClick={() => scrollToSection('telegram')} className="hover:text-white cursor-pointer transition font-semibold">Telegram Bot</button></li>
                                 <li><button onClick={() => scrollToSection('dashboard')} className="hover:text-white cursor-pointer transition font-semibold">Dashboard</button></li>
@@ -618,14 +618,14 @@ function LandingPage() {
                             </ul>
                         </div>
                         <div>
-                            <h4 className="font-bold text-sm md:text-lg mb-2 md:mb-4">Quick Links</h4>
+                            <h3 className="font-bold text-sm md:text-lg mb-2 md:mb-4">Quick Links</h3>
                             <ul className="space-y-1 md:space-y-2 text-gray-400 text-sm md:text-base">
                                 <li><button onClick={() => scrollToSection('features')} className="hover:text-white cursor-pointer transition font-semibold">Features</button></li>
                                 <li><button onClick={() => scrollToSection('how-it-works')} className="hover:text-white cursor-pointer transition font-semibold">How It Works</button></li>
                             </ul>
                         </div>
                         <div className="col-span-2 md:col-span-1 mt-2 md:mt-0">
-                            <h4 className="font-bold text-sm md:text-lg mb-2 md:mb-4">Get Started</h4>
+                            <h3 className="font-bold text-sm md:text-lg mb-2 md:mb-4">Get Started</h3>
                             <button
                                 onClick={() => openAuthModal('register')}
                                 className="w-full py-2 md:py-3 bg-[#387ED1] text-white rounded-lg font-semibold text-sm md:text-base transition cursor-pointer"
@@ -646,7 +646,7 @@ function LandingPage() {
                     initialView={authView}
                 />
             )}
-        </>
+        </main>
     );
 }
 
