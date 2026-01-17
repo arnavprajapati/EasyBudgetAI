@@ -95,11 +95,11 @@ function LandingPage() {
     ];
 
     const expenseExamples = [
-        { text: '50 chai pi office mein', category: 'Food & Dining', color: 'bg-orange-500' },
-        { text: '200 uber se ghar aaya', category: 'Travel & Transport', color: 'bg-blue-500' },
-        { text: '500 grocery liya bazaar se', category: 'Shopping', color: 'bg-pink-500' },
-        { text: '1000 bijli ka bill bhara', category: 'Bills & Utilities', color: 'bg-amber-500' },
-        { text: '15000 room ka rent diya', category: 'Housing / Rent', color: 'bg-purple-500' }
+        { text: '50 chai pi office mein', category: 'Food & Dining', color: 'bg-orange-700' },
+        { text: '200 uber se ghar aaya', category: 'Travel & Transport', color: 'bg-blue-700' },
+        { text: '500 grocery liya bazaar se', category: 'Shopping', color: 'bg-pink-700' },
+        { text: '1000 bijli ka bill bhara', category: 'Bills & Utilities', color: 'bg-amber-700' },
+        { text: '15000 room ka rent diya', category: 'Housing / Rent', color: 'bg-purple-700' }
     ];
 
     const incomeExamples = [
@@ -185,7 +185,7 @@ function LandingPage() {
                                 </button>
                                 <button
                                     onClick={() => navigate('/register')}
-                                    className="bg-[#387ED1] text-white text-sm md:text-base font-bold px-4 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl shadow-md hover:shadow-blue-200 transition-all cursor-pointer"
+                                    className="bg-[#2563eb] text-white text-sm md:text-base font-bold px-4 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl shadow-md hover:shadow-blue-200 transition-all cursor-pointer"
                                 >
                                     Sign Up
                                 </button>
@@ -218,7 +218,7 @@ function LandingPage() {
                             <div className="flex flex-row space-x-3 sm:space-x-4 max-w-sm">
                                 <button
                                     onClick={() => openAuthModal('register')}
-                                    className="flex-1 text-sm sm:text-base md:text-lg py-2.5 md:py-3 rounded-lg font-semibold text-white cursor-pointer bg-[#387ED1] transition duration-200 shadow-lg"
+                                    className="flex-1 text-sm sm:text-base md:text-lg py-2.5 md:py-3 rounded-lg font-semibold text-white cursor-pointer bg-[#2563eb] transition duration-200 shadow-lg"
                                 >
                                     Get Started Free
                                 </button>
@@ -331,7 +331,7 @@ function LandingPage() {
                                 <button
                                     onClick={() => setActiveTab('expenses')}
                                     className={`px-6 py-3 rounded-xl font-bold transition-all cursor-pointer ${activeTab === 'expenses'
-                                        ? 'bg-red-500 text-white shadow-lg'
+                                        ? 'bg-red-700 text-white shadow-lg'
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}
                                 >
@@ -445,7 +445,7 @@ function LandingPage() {
                                         </div>
                                         <div className="flex-1 ml-4">
                                             <div className="bg-white rounded-xl p-4 shadow-lg">
-                                                <h4 className="text-lg font-bold text-gray-800 mb-2">{step.title}</h4>
+                                                <h3 className="text-lg font-bold text-gray-800 mb-2">{step.title}</h3>
                                                 <p className="text-gray-700 text-sm font-semibold leading-relaxed">{step.description}</p>
                                             </div>
                                         </div>
@@ -455,7 +455,7 @@ function LandingPage() {
                                         <div className="flex-1 pr-12 text-right">
                                             {index % 2 === 0 && (
                                                 <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 inline-block text-left max-w-md ml-auto">
-                                                    <h4 className="text-3xl font-bold text-gray-800 mb-3">{step.title}</h4>
+                                                    <h3 className="text-3xl font-bold text-gray-800 mb-3">{step.title}</h3>
                                                     <p className="text-gray-700 text-lg font-semibold leading-relaxed">{step.description}</p>
                                                 </div>
                                             )}
@@ -470,7 +470,7 @@ function LandingPage() {
                                         <div className="flex-1 pl-12 text-left">
                                             {index % 2 !== 0 && (
                                                 <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 inline-block max-w-md">
-                                                    <h4 className="text-3xl font-bold text-gray-800 mb-3">{step.title}</h4>
+                                                    <h3 className="text-3xl font-bold text-gray-800 mb-3">{step.title}</h3>
                                                     <p className="text-gray-700 text-lg font-semibold leading-relaxed">{step.description}</p>
                                                 </div>
                                             )}
@@ -502,7 +502,7 @@ function LandingPage() {
                                         <span className="text-2xl">💚</span>
                                     </div>
                                     <div>
-                                        <h5 className="font-bold text-green-800">To Receive</h5>
+                                        <p className="font-bold text-green-800">To Receive</p>
                                         <p className="text-green-700 text-sm font-semibold">Track money others owe you</p>
                                     </div>
                                 </div>
@@ -511,7 +511,7 @@ function LandingPage() {
                                         <span className="text-2xl">❤️</span>
                                     </div>
                                     <div>
-                                        <h5 className="font-bold text-red-800">To Give</h5>
+                                        <p className="font-bold text-red-800">To Give</p>
                                         <p className="text-red-700 text-sm font-semibold">Track money you owe others</p>
                                     </div>
                                 </div>
@@ -519,7 +519,7 @@ function LandingPage() {
                         </div>
                         <div className="relative">
                             <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
-                                <h4 className="text-2xl font-bold text-gray-800 mb-6">Example Party Entries</h4>
+                                <h3 className="text-2xl font-bold text-gray-800 mb-6">Example Party Entries</h3>
                                 <div className="space-y-4">
                                     <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center border border-gray-100 hover:shadow-md transition-all ">
                                         <div className="flex items-center gap-3 cursor-pointer">
@@ -578,7 +578,7 @@ function LandingPage() {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button
                             onClick={() => openAuthModal('register')}
-                            className="px-8 py-4 bg-white text-[#387ED1] rounded-xl font-bold text-lg hover:bg-gray-100 transition shadow-lg cursor-pointer"
+                            className="px-8 py-4 bg-white text-[#1d4ed8] rounded-xl font-bold text-lg hover:bg-gray-100 transition shadow-lg cursor-pointer"
                         >
                             🚀 Get Started Free
                         </button>
@@ -586,7 +586,7 @@ function LandingPage() {
                             href="https://t.me/smart_khata_bot"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-8 py-4 bg-[#0088cc] text-white rounded-xl font-bold text-lg hover:bg-[#0077b3] transition shadow-lg flex items-center justify-center gap-2"
+                            className="px-8 py-4 bg-[#006699] text-white rounded-xl font-bold text-lg hover:bg-[#005580] transition shadow-lg flex items-center justify-center gap-2"
                         >
                             <span>📱</span> Try Telegram Bot
                         </a>
@@ -634,7 +634,7 @@ function LandingPage() {
                             <h3 className="font-bold text-sm md:text-lg mb-2 md:mb-4">Get Started</h3>
                             <button
                                 onClick={() => openAuthModal('register')}
-                                className="w-full py-2 md:py-3 bg-[#387ED1] text-white rounded-lg font-semibold text-sm md:text-base transition cursor-pointer"
+                                className="w-full py-2 md:py-3 bg-[#2563eb] text-white rounded-lg font-semibold text-sm md:text-base transition cursor-pointer"
                             >
                                 Sign Up Now
                             </button>
