@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import AuthModal from './auth/AuthModal';
+import { useNavigate } from 'react-router-dom';
 
 function LandingPage() {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [authView, setAuthView] = useState('login');
     const [activeTab, setActiveTab] = useState('expenses');
     const context = useOutletContext() || {};
+
+    const navigate = useNavigate();
 
     const openAuthModal = (view) => {
         setAuthView(view);
@@ -144,7 +147,7 @@ function LandingPage() {
     return (
         <>
             <div className="min-h-screen relative overflow-hidden bg-white">
-                <nav className="absolute top-2 md:top-4 left-0 right-0 z-50">
+                <nav className="absolute top-2 md:top-2 left-0 right-0 z-50">
                     <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 md:py-6">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2 md:space-x-3">
@@ -175,13 +178,13 @@ function LandingPage() {
 
                             <div className="flex items-center space-x-2 md:space-x-4">
                                 <button
-                                    onClick={() => openAuthModal('login')}
+                                    onClick={() => navigate('/login')}
                                     className="hidden sm:block text-sm md:text-base font-bold text-gray-600 hover:text-[#387ED1] cursor-pointer px-2 md:px-4 py-2"
                                 >
                                     Login
                                 </button>
                                 <button
-                                    onClick={() => openAuthModal('register')}
+                                    onClick={() => navigate('/register')}
                                     className="bg-[#387ED1] text-white text-sm md:text-base font-bold px-4 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl shadow-md hover:shadow-blue-200 transition-all cursor-pointer"
                                 >
                                     Sign Up
