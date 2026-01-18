@@ -397,9 +397,9 @@ function LandingPage() {
                         </p>
                     </div>
 
-                    <div className="flex flex-col lg:flex-row gap-6 justify-center items-stretch">
+                    <div className="flex flex-col lg:flex-row gap-6 justify-center items-center lg:items-stretch">
                         <div className="w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
-                            <div className="bg-white rounded-[1.5rem] p-3 h-[380px] flex flex-col">
+                            <div className="bg-white rounded-[1.5rem] p-3 h-[420px] md:h-[380px] flex flex-col">
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
                                     <img
                                         src="https://res.cloudinary.com/dzz1wmydl/image/upload/w_96,q_auto,f_auto/v1762864750/unnamed_1_dick2v.jpg"
@@ -444,14 +444,16 @@ function LandingPage() {
                                     </div>
                                 </div>
 
-                                <div className="mt-auto bg-gray-100 rounded-full px-3 py-1.5 border border-gray-200">
-                                    <span className="text-gray-400 text-[10px] font-semibold">Type message...</span>
+                                <div className="mt-auto bg-gray-100 rounded-full px-4 py-2 border border-gray-200 flex items-center">
+                                    <span className="text-gray-400 text-[10px] font-semibold">
+                                        Type message...
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
-                            <div className="bg-white rounded-[1.5rem] p-3 h-[380px] flex flex-col">
+                            <div className="bg-white rounded-[1.5rem] p-3 h-[420px] md:h-[380px] flex flex-col">
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
                                     <img
                                         src="https://res.cloudinary.com/dzz1wmydl/image/upload/w_96,q_auto,f_auto/v1762864750/unnamed_1_dick2v.jpg"
@@ -493,14 +495,16 @@ function LandingPage() {
                                     </div>
                                 </div>
 
-                                <div className="mt-auto bg-gray-100 rounded-full px-3 py-1.5 border border-gray-200">
-                                    <span className="text-gray-400 text-[10px] font-semibold">Type message...</span>
+                                <div className="mt-auto bg-gray-100 rounded-full px-4 py-2 border border-gray-200 flex items-center">
+                                    <span className="text-gray-400 text-[10px] font-semibold">
+                                        Type message...
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
-                            <div className="bg-white rounded-[1.5rem] p-3 h-[380px] flex flex-col">
+                            <div className="bg-white rounded-[1.5rem] p-3 h-[420px] md:h-[380px] flex flex-col">
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
                                     <img
                                         src="https://res.cloudinary.com/dzz1wmydl/image/upload/w_96,q_auto,f_auto/v1762864750/unnamed_1_dick2v.jpg"
@@ -536,14 +540,16 @@ function LandingPage() {
                                     </div>
                                 </div>
 
-                                <div className="mt-auto bg-gray-100 rounded-full px-3 py-1.5 border border-gray-200">
-                                    <span className="text-gray-400 text-[10px] font-semibold">Type message...</span>
+                                <div className="mt-auto bg-gray-100 rounded-full px-4 py-2 border border-gray-200 flex items-center">
+                                    <span className="text-gray-400 text-[10px] font-semibold">
+                                        Type message...
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
-                            <div className="bg-white rounded-[1.5rem] p-3 h-[380px] flex flex-col">
+                            <div className="bg-white rounded-[1.5rem] p-3 h-[420px] md:h-[380px] flex flex-col">
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
                                     <img
                                         src="https://res.cloudinary.com/dzz1wmydl/image/upload/w_96,q_auto,f_auto/v1762864750/unnamed_1_dick2v.jpg"
@@ -589,14 +595,16 @@ function LandingPage() {
                                     </div>
                                 </div>
 
-                                <div className="mt-auto bg-gray-100 rounded-full px-3 py-1.5 border border-gray-200">
-                                    <span className="text-gray-400 text-[10px] font-semibold">Type message...</span>
+                                <div className="mt-auto bg-gray-100 rounded-full px-4 py-2 border border-gray-200 flex items-center">
+                                    <span className="text-gray-400 text-[10px] font-semibold">
+                                        Type message...
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
-                            <div className="bg-white rounded-[1.5rem] p-3 h-[380px] flex flex-col">
+                            <div className="bg-white rounded-[1.5rem] p-3 h-[420px] md:h-[380px] flex flex-col">
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
                                     <img
                                         src="https://res.cloudinary.com/dzz1wmydl/image/upload/w_96,q_auto,f_auto/v1762864750/unnamed_1_dick2v.jpg"
@@ -642,8 +650,10 @@ function LandingPage() {
                                     </div>
                                 </div>
 
-                                <div className="mt-auto bg-gray-100 rounded-full px-3 py-1.5 border border-gray-200">
-                                    <span className="text-gray-400 text-[10px] font-semibold">Type message...</span>
+                                <div className="mt-auto bg-gray-100 rounded-full px-4 py-2 border border-gray-200 flex items-center">
+                                    <span className="text-gray-400 text-[10px] font-semibold">
+                                        Type message...
+                                    </span>
                                 </div>
                             </div>
                         </div>
