@@ -27,9 +27,50 @@ const levenshteinDistance = (str1, str2) => {
 
 const similarityScore = (str1, str2) => {
     if (!str1 || !str2) return 0;
-    const maxLen = Math.max(str1.length, str2.length);
+    const s1 = str1.toLowerCase().trim();
+    const s2 = str2.toLowerCase().trim();
+    const maxLen = Math.max(s1.length, s2.length);
     if (maxLen === 0) return 1;
-    return 1 - (levenshteinDistance(str1, str2) / maxLen);
+    
+    const levenScore = 1 - (levenshteinDistance(s1, s2) / maxLen);
+    
+    const phoneticScore = getPhoneticScore(s1, s2);
+    
+    const firstName1 = s1.split(' ')[0];
+    const firstName2 = s2.split(' ')[0];
+    const firstNameBonus = firstName1 === firstName2 ? 0.15 : 0;
+    
+    const containsBonus = (s1.includes(firstName2) || s2.includes(firstName1)) ? 0.1 : 0;
+    
+    return Math.min(1, levenScore + phoneticScore + firstNameBonus + containsBonus);
+};
+
+const getPhoneticScore = (s1, s2) => {
+    const normalize = (s) => s
+        .replace(/sh/g, 's')
+        .replace(/ee/g, 'i')
+        .replace(/ai/g, 'e')
+        .replace(/aa/g, 'a')
+        .replace(/oo/g, 'u')
+        .replace(/th/g, 't')
+        .replace(/dh/g, 'd')
+        .replace(/bh/g, 'b')
+        .replace(/ph/g, 'f')
+        .replace(/kh/g, 'k')
+        .replace(/gh/g, 'g')
+        .replace(/ch/g, 'c')
+        .replace(/jh/g, 'j');
+    
+    const n1 = normalize(s1);
+    const n2 = normalize(s2);
+    
+    if (n1 === n2) return 0.2;
+    
+    const normalizedSimilarity = 1 - (levenshteinDistance(n1, n2) / Math.max(n1.length, n2.length));
+    if (normalizedSimilarity > 0.9) return 0.15;
+    if (normalizedSimilarity > 0.8) return 0.1;
+    
+    return 0;
 };
 
 
@@ -83,7 +124,7 @@ export const getExistingParties = async (userId, limit = 20) => {
         const parties = Array.from(partyMap.values())
             .map(party => ({
                 ...party,
-                balance: party.toReceive - party.given + party.received - party.toGive
+                balance: party.given + party.toReceive - party.received - party.toGive
             }))
             .sort((a, b) => {
                 const scoreA = a.count * 0.3 + (a.lastActivity / Date.now()) * 0.7;
@@ -99,8 +140,8 @@ export const getExistingParties = async (userId, limit = 20) => {
     }
 };
 
-export const findSimilarParties = async (userId, inputName, threshold = 0.6) => {
-    const existingParties = await getExistingParties(userId, 50);
+export const findSimilarParties = async (userId, inputName, threshold = 0.5) => {
+    const existingParties = await getExistingParties(userId, 100);
 
     const similarParties = existingParties
         .map(party => ({
@@ -109,7 +150,7 @@ export const findSimilarParties = async (userId, inputName, threshold = 0.6) => 
         }))
         .filter(party => party.similarity >= threshold && party.similarity < 1.0)
         .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, 5);
+        .slice(0, 8);
 
     return similarParties;
 };
@@ -184,7 +225,7 @@ export const buildPartySelectionKeyboard = (options) => {
     const keyboard = [];
 
     if (similarParties.length > 0) {
-        for (const party of similarParties.slice(0, 3)) {
+        for (const party of similarParties.slice(0, 5)) {
             const label = `✅ ${party.name} (${Math.round(party.similarity * 100)}% match)`;
             keyboard.push([{
                 text: label,
@@ -269,29 +310,23 @@ export const needsPartyClarification = async (userId, transaction) => {
     const inputNameLower = partyName.toLowerCase().trim();
     const inputFirstName = inputNameLower.split(' ')[0];
 
-    // Find all parties with same first name or exact match
     const matchingParties = existingParties.filter(party => {
         const existingNameLower = party.name.toLowerCase().trim();
         const existingFirstName = existingNameLower.split(' ')[0];
 
-        // Exact match
         if (existingNameLower === inputNameLower) return true;
 
-        // Same first name (e.g., "Gaurav", "Gaurav Delhi", "Gaurav Office")
         if (existingFirstName === inputFirstName) return true;
 
-        // Contains first name
         if (existingNameLower.includes(inputFirstName) || inputNameLower.includes(existingFirstName)) return true;
 
-        // High similarity
         const similarity = similarityScore(partyName, party.name);
-        if (similarity >= 0.6) return true;
+        if (similarity >= 0.5) return true;
 
         return false;
     });
 
     if (matchingParties.length > 0) {
-        // Sort by similarity and exact matches first
         const sortedMatches = matchingParties.map(p => ({
             ...p,
             similarity: p.name.toLowerCase().trim() === inputNameLower ? 1.0 : similarityScore(partyName, p.name)
