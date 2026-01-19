@@ -213,7 +213,7 @@ const Settings = () => {
                                         rel="noopener noreferrer"
                                         className="text-xl font-bold text-[#0088cc] hover:text-[#006699] transition-colors"
                                     >
-                                        @@smart_khata_bot
+                                        @smart_khata_bot
                                     </a>
                                 </div>
 
