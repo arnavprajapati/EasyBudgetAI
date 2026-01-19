@@ -21,10 +21,8 @@ const Register = () => {
         email,
         password,
       });
-      toast.success(data.message);
-      setName("");
-      setEmail("");
-      setPassword("");
+      localStorage.setItem('registeredEmail', email);
+      navigate('/verify-email');
     } catch (error) {
       toast.error(error.response?.data?.message || "Registration failed");
     } finally {

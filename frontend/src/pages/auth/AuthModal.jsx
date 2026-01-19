@@ -42,11 +42,9 @@ function AuthModal({ onClose, initialView = 'login' }) {
                     email,
                     password,
                 });
-                toast.success(data.message);
-                setName('');
-                setEmail('');
-                setPassword('');
-                toast.info('Please check your email to verify your account');
+                localStorage.setItem('registeredEmail', email);
+                onClose();
+                navigate('/verify-email');
             }
         } catch (error) {
             toast.error(error.response?.data?.message || `${isLogin ? 'Login' : 'Registration'} failed`);

@@ -10,7 +10,8 @@ import {
     Clock,
     Smartphone,
     Bell,
-    BarChart3
+    BarChart3,
+    More
 } from 'lucide-react';
 
 const TelegramOnboarding = ({ userName }) => {
@@ -113,13 +114,13 @@ const TelegramOnboarding = ({ userName }) => {
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <span className="bg-gray-50 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 flex items-center gap-1.5">
-                            <Smartphone size={12} /> WhatsApp Integration
-                        </span>
-                        <span className="bg-gray-50 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 flex items-center gap-1.5">
                             <Bell size={12} /> Smart Reminders
                         </span>
                         <span className="bg-gray-50 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 flex items-center gap-1.5">
                             <BarChart3 size={12} /> Advanced Reports
+                        </span>
+                        <span className="bg-gray-50 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 flex items-center gap-1.5">
+                            <More size={12} /> More Features 
                         </span>
                     </div>
                 </div>

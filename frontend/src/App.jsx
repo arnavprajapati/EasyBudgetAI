@@ -10,6 +10,7 @@ import Login from "./pages/auth/Login";
 import VerifyOtp from "./pages/auth/VerifyOtp";
 import Register from "./pages/auth/Register";
 import Verify from "./pages/auth/Verify";
+import VerifyEmail from "./pages/auth/VerifyEmail";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import Settings from "./pages/Settings";
@@ -43,6 +44,10 @@ const AppContent = () => {
     {
       path: "/token/:token",
       element: !isAuth ? <Verify /> : <Navigate to="/" replace />
+    },
+    {
+      path: "/verify-email",
+      element: !isAuth ? <VerifyEmail /> : <Navigate to="/" replace />
     },
     {
       path: "/forgot-password",
