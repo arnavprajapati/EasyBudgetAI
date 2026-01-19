@@ -437,6 +437,61 @@ const handleCallbackQuery = async (callbackQuery) => {
         } else if (action === 'party_prompt') {
             await bot.answerCallbackQuery(callbackQuery.id, { text: "Please send the party name as a message" });
             return;
+        } else if (action === 'party_viewall') {
+            // Show all parties as buttons
+            const { User } = await import("./models/User.js");
+            const { getExistingParties } = await import("./config/partyMatcher.js");
+            
+            const user = await User.findOne({ telegramUserId });
+            if (!user) {
+                await bot.answerCallbackQuery(callbackQuery.id, { text: "Account not linked!" });
+                return;
+            }
+            
+            const allParties = await getExistingParties(user._id, 20);
+            
+            if (allParties.length === 0) {
+                await bot.answerCallbackQuery(callbackQuery.id, { text: "No saved parties yet!" });
+                return;
+            }
+            
+            // Build keyboard with all parties
+            const partyKeyboard = [];
+            for (const party of allParties) {
+                const lastDate = new Date(party.lastActivity).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                const balanceSign = party.balance >= 0 ? '+' : '';
+                const label = `👤 ${party.name} (${balanceSign}₹${party.balance} • ${lastDate})`;
+                partyKeyboard.push([{
+                    text: label,
+                    callback_data: `party_select:0:${party.name}`
+                }]);
+            }
+            
+            // Add back button and other options
+            partyKeyboard.push([
+                { text: `➕ Enter New Party`, callback_data: `party_prompt:0` },
+                { text: `⏭️ Skip Party`, callback_data: `party_skip:0` }
+            ]);
+            partyKeyboard.push([{
+                text: `❌ Cancel Transaction`,
+                callback_data: `party_cancel:0`
+            }]);
+            
+            const typeEmoji = transaction.type === "credit" ? "💰" : "💸";
+            let message = `${typeEmoji} <b>Select Party</b>\n\n`;
+            message += `💵 Amount: ₹${transaction.amount}\n`;
+            message += `📝 ${transaction.description}\n\n`;
+            message += `👥 <b>All Your Parties:</b>`;
+            
+            await bot.editMessageText(message, {
+                chat_id: chatId,
+                message_id: messageId,
+                parse_mode: "HTML",
+                reply_markup: { inline_keyboard: partyKeyboard }
+            });
+            
+            await bot.answerCallbackQuery(callbackQuery.id, { text: "Showing all parties" });
+            return;
         }
 
         transaction.partyName = selectedParty;

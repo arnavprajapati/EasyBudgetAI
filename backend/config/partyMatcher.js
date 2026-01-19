@@ -31,17 +31,17 @@ const similarityScore = (str1, str2) => {
     const s2 = str2.toLowerCase().trim();
     const maxLen = Math.max(s1.length, s2.length);
     if (maxLen === 0) return 1;
-    
+
     const levenScore = 1 - (levenshteinDistance(s1, s2) / maxLen);
-    
+
     const phoneticScore = getPhoneticScore(s1, s2);
-    
+
     const firstName1 = s1.split(' ')[0];
     const firstName2 = s2.split(' ')[0];
     const firstNameBonus = firstName1 === firstName2 ? 0.15 : 0;
-    
+
     const containsBonus = (s1.includes(firstName2) || s2.includes(firstName1)) ? 0.1 : 0;
-    
+
     return Math.min(1, levenScore + phoneticScore + firstNameBonus + containsBonus);
 };
 
@@ -60,16 +60,16 @@ const getPhoneticScore = (s1, s2) => {
         .replace(/gh/g, 'g')
         .replace(/ch/g, 'c')
         .replace(/jh/g, 'j');
-    
+
     const n1 = normalize(s1);
     const n2 = normalize(s2);
-    
+
     if (n1 === n2) return 0.2;
-    
+
     const normalizedSimilarity = 1 - (levenshteinDistance(n1, n2) / Math.max(n1.length, n2.length));
     if (normalizedSimilarity > 0.9) return 0.15;
     if (normalizedSimilarity > 0.8) return 0.1;
-    
+
     return 0;
 };
 
@@ -237,7 +237,7 @@ export const buildPartySelectionKeyboard = (options) => {
     if (recentParties.length > 0 && similarParties.length === 0) {
         for (const party of recentParties.slice(0, 4)) {
             const lastDate = new Date(party.lastActivity).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-            const label = `👤 ${party.name} (₹${party.totalAmount} • ${lastDate})`;
+            const label = `👤 ${party.name} (₹${party.balance} • ${lastDate})`;
             keyboard.push([{
                 text: label,
                 callback_data: `party_select:${transactionIndex}:${party.name}`
@@ -269,6 +269,11 @@ export const buildPartySelectionKeyboard = (options) => {
     if (actionRow.length > 0) {
         keyboard.push(actionRow);
     }
+
+    keyboard.push([{
+        text: `📋 View All Parties`,
+        callback_data: `party_viewall:${transactionIndex}`
+    }]);
 
     keyboard.push([{
         text: `❌ Cancel Transaction`,
