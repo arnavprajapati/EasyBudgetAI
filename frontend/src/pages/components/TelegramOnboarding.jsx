@@ -11,7 +11,7 @@ import {
     Smartphone,
     Bell,
     BarChart3,
-    More
+    MoreHorizontal
 } from 'lucide-react';
 
 const TelegramOnboarding = ({ userName }) => {
@@ -120,7 +120,7 @@ const TelegramOnboarding = ({ userName }) => {
                             <BarChart3 size={12} /> Advanced Reports
                         </span>
                         <span className="bg-gray-50 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 flex items-center gap-1.5">
-                            <More size={12} /> More Features 
+                            <MoreHorizontal size={12} /> More Features 
                         </span>
                     </div>
                 </div>
@@ -129,7 +129,6 @@ const TelegramOnboarding = ({ userName }) => {
     );
 };
 
-// Feature Item Component - Compact
 const FeatureItem = ({ icon, color, title, description }) => {
     const colorClasses = {
         green: 'bg-green-50 border-green-100',
