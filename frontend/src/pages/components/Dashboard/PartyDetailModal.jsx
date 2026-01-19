@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, TrendingUp, TrendingDown, Calendar, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { X, TrendingUp, TrendingDown, Calendar, ChevronLeft, ChevronRight, MessageSquare, Trash2, Pencil } from 'lucide-react';
 import api from '../../../apiIntercepter';
 import { toast } from 'react-toastify';
+import DeleteConfirmModal from './DeleteConfirmModal';
+import EditTransactionModal from './EditTransactionModal';
 
 const PartyDetailModal = ({ party, onClose }) => {
     const [transactions, setTransactions] = useState([]);
@@ -16,6 +18,9 @@ const PartyDetailModal = ({ party, onClose }) => {
         pages: 1,
         total: 0
     });
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, transaction: null });
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [editModal, setEditModal] = useState({ isOpen: false, transaction: null });
 
     useEffect(() => {
         fetchPartyTransactions(1);
@@ -70,6 +75,27 @@ const PartyDetailModal = ({ party, onClose }) => {
         if (balance > 0) return `${party.name} owes you`;
         if (balance < 0) return `You owe ${party.name}`;
         return 'Settled up';
+    };
+
+    const handleDeleteClick = (txn) => {
+        setDeleteModal({ isOpen: true, transaction: txn });
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteModal.transaction) return;
+        
+        setIsDeleting(true);
+        try {
+            await api.delete(`/api/v1/expense/${deleteModal.transaction._id}`);
+            toast.success('Transaction deleted successfully');
+            setDeleteModal({ isOpen: false, transaction: null });
+            fetchPartyTransactions(pagination.page);
+        } catch (error) {
+            console.error('Failed to delete:', error);
+            toast.error('Failed to delete transaction');
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     return (
@@ -188,9 +214,31 @@ const PartyDetailModal = ({ party, onClose }) => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <p className={`font-bold text-base ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
-                                                    {isCredit ? '+' : '-'}{formatCurrency(txn.amount)}
-                                                </p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className={`font-bold text-base ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
+                                                        {isCredit ? '+' : '-'}{formatCurrency(txn.amount)}
+                                                    </p>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditModal({ isOpen: true, transaction: txn });
+                                                        }}
+                                                        className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
+                                                        title="Edit transaction"
+                                                    >
+                                                        <Pencil size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteClick(txn);
+                                                        }}
+                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
+                                                        title="Delete transaction"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         );
                                     })}
@@ -222,6 +270,22 @@ const PartyDetailModal = ({ party, onClose }) => {
                     </div>
                 </div>
             </div>
+            
+            <DeleteConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, transaction: null })}
+                onConfirm={handleDeleteConfirm}
+                transactionDescription={deleteModal.transaction?.description || 'Transaction'}
+                amount={deleteModal.transaction?.amount}
+                isDeleting={isDeleting}
+            />
+            
+            <EditTransactionModal
+                isOpen={editModal.isOpen}
+                onClose={() => setEditModal({ isOpen: false, transaction: null })}
+                onSuccess={() => fetchPartyTransactions(pagination.page)}
+                transaction={editModal.transaction}
+            />
         </div>
     );
 };

@@ -3,11 +3,14 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchTelegramStatus } from "../redux/slices/telegramSlice";
 import api from "../apiIntercepter";
 import { toast } from "react-toastify";
+import { Trash2, Pencil } from "lucide-react";
 
 import TelegramOnboarding from "./components/TelegramOnboarding";
 import DailyTrendChart from "./components/Dashboard/DailyTrendChart";
 import TimeFilter from "./components/Dashboard/TimeFilter";
 import AddTransactionModal from "./components/Dashboard/AddTransactionModal";
+import DeleteConfirmModal from "./components/Dashboard/DeleteConfirmModal";
+import EditTransactionModal from "./components/Dashboard/EditTransactionModal";
 
 const Home = () => {
     const { user } = useSelector((state) => state.auth);
@@ -20,6 +23,9 @@ const Home = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, expense: null });
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [editModal, setEditModal] = useState({ isOpen: false, expense: null });
     const [summary, setSummary] = useState({
         totalIncome: 0,
         totalExpense: 0,
@@ -121,6 +127,27 @@ const Home = () => {
 
     const userName = user?.name?.split(' ')[0] || 'User';
     const net = summary.totalIncome - summary.totalExpense;
+
+    const handleDeleteClick = (expense) => {
+        setDeleteModal({ isOpen: true, expense });
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteModal.expense) return;
+        
+        setIsDeleting(true);
+        try {
+            await api.delete(`/api/v1/expense/${deleteModal.expense._id}`);
+            toast.success('Transaction deleted successfully');
+            setDeleteModal({ isOpen: false, expense: null });
+            fetchExpenses();
+        } catch (error) {
+            console.error('Failed to delete:', error);
+            toast.error('Failed to delete transaction');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     const categoryColors = {
         'Food & Dining': 'bg-orange-500',
@@ -265,10 +292,11 @@ const Home = () => {
                             <table className="w-full">
                                 <thead className="bg-gray-50 border-b border-gray-100">
                                     <tr>
-                                        <th className="text-left px-8 py-5 text-sm font-bold text-gray-500 uppercase tracking-wider w-1/4">Date</th>
-                                        <th className="text-left px-8 py-5 text-sm font-bold text-gray-500 uppercase tracking-wider w-1/3">Description</th>
+                                        <th className="text-left px-8 py-5 text-sm font-bold text-gray-500 uppercase tracking-wider w-1/5">Date</th>
+                                        <th className="text-left px-8 py-5 text-sm font-bold text-gray-500 uppercase tracking-wider w-1/4">Description</th>
                                         <th className="text-center px-8 py-5 text-sm font-bold text-gray-500 uppercase tracking-wider w-1/6">Category</th>
-                                        <th className="text-right px-8 py-5 text-sm font-bold text-gray-500 uppercase tracking-wider w-1/4">Amount</th>
+                                        <th className="text-right px-8 py-5 text-sm font-bold text-gray-500 uppercase tracking-wider w-1/6">Amount</th>
+                                        <th className="text-center px-4 py-5 text-sm font-bold text-gray-500 uppercase tracking-wider w-16">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
@@ -298,6 +326,24 @@ const Home = () => {
                                                 <span className={`text-lg font-bold ${expense.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
                                                     {expense.type === 'credit' ? '+' : '-'}₹{expense.amount.toLocaleString('en-IN')}
                                                 </span>
+                                            </td>
+                                            <td className="px-4 py-6 text-center">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button
+                                                        onClick={() => setEditModal({ isOpen: true, expense })}
+                                                        className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
+                                                        title="Edit transaction"
+                                                    >
+                                                        <Pencil size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteClick(expense)}
+                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
+                                                        title="Delete transaction"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -349,6 +395,22 @@ const Home = () => {
                 isOpen={showAddModal}
                 onClose={() => setShowAddModal(false)}
                 onSuccess={fetchExpenses}
+            />
+            
+            <DeleteConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, expense: null })}
+                onConfirm={handleDeleteConfirm}
+                transactionDescription={deleteModal.expense?.description || deleteModal.expense?.category}
+                amount={deleteModal.expense?.amount}
+                isDeleting={isDeleting}
+            />
+            
+            <EditTransactionModal
+                isOpen={editModal.isOpen}
+                onClose={() => setEditModal({ isOpen: false, expense: null })}
+                onSuccess={fetchExpenses}
+                transaction={editModal.expense}
             />
         </div>
     );
