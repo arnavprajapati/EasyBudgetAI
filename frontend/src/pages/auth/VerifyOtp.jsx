@@ -6,6 +6,7 @@ import { server } from "../../main";
 import { toast } from "react-toastify";
 import { setAuth, setUser } from "../../redux/slices/authSlice";
 import { setCSRFToken } from "../../apiIntercepter";
+import { identifyUser } from "../../utils/analytics";
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState("");
@@ -25,7 +26,6 @@ const VerifyOtp = () => {
         { withCredentials: true }
       );
 
-      // Store CSRF token from response (cross-origin can't read cookies)
       if (data.sessionInfo?.csrfToken) {
         setCSRFToken(data.sessionInfo.csrfToken);
       }
@@ -33,6 +33,15 @@ const VerifyOtp = () => {
       toast.success(data.message);
       dispatch(setAuth(true));
       dispatch(setUser(data.user));
+      
+      // Identify user in Amplitude
+      if (data.user) {
+        identifyUser(data.user._id, {
+          email: data.user.email,
+          name: data.user.name
+        });
+      }
+      
       localStorage.removeItem("email");
       navigate("/");
     } catch (error) {

@@ -1,15 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { server } from "../../main";
 import { X } from "lucide-react";
+import analytics from "../../utils/analytics";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [btnLoading, setBtnLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    analytics.pageView('Login');
+  }, []);
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -20,6 +25,7 @@ const Login = () => {
         password,
       });
       toast.success(data.message);
+      analytics.login('email');
       localStorage.setItem("email", email);
       navigate("/verifyotp");
     } catch (error) {
