@@ -16,7 +16,6 @@ function Navbar({ onAuthClick }) {
 
     const isActive = (path) => location.pathname === path;
 
-    // Hide navbar on landing page for non-authenticated users
     const isLandingPage = location.pathname === '/';
     if (isLandingPage && !isAuth) {
         return null;
@@ -101,7 +100,7 @@ function Navbar({ onAuthClick }) {
                                     
                                     <button
                                         onClick={handleLogout}
-                                        className="p-2 rounded-xl text-red-500 hover:bg-red-50 transition-all group"
+                                        className="p-2 rounded-xl text-red-500 hover:bg-red-50 transition-all cursor-pointer group"
                                     >
                                         <LogOut className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-0.5 transition-transform" />
                                     </button>
