@@ -390,7 +390,7 @@ export const parseExpenses = async (messageText, userId = null) => {
                     partyName: txn.partyName && typeof txn.partyName === "string" ? txn.partyName.trim() : null,
                     partyConfidence: typeof txn.partyConfidence === "number" ? txn.partyConfidence : 0,
                     isPending: txn.isPending === true,
-                    khataType: txn.khataType || null,
+                    khataType: txn.partyName ? (txn.type === 'debit' ? 'to_receive' : 'to_give') : null,
                 };
             });
 

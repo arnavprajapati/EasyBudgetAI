@@ -313,6 +313,7 @@ const handleExpenseMessage = async (msg) => {
                 source: "telegram",
                 partyName: newPartyName,
                 isPending: isPending,
+                khataType: newPartyName ? (transaction.type === 'debit' ? 'to_receive' : 'to_give') : null,
             });
 
             await clearPendingTransaction(telegramUserId);
@@ -521,6 +522,7 @@ const handleCallbackQuery = async (callbackQuery) => {
             source: "telegram",
             partyName: selectedParty,
             isPending: isPending,
+            khataType: selectedParty ? (transaction.type === 'debit' ? 'to_receive' : 'to_give') : null,
         });
 
         await clearPendingTransaction(telegramUserId);
