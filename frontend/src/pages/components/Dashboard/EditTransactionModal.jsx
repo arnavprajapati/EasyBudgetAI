@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import api from '../../../apiIntercepter';
 import { toast } from 'react-toastify';
+import analytics from '../../../utils/analytics';
 
 const EditTransactionModal = ({ isOpen, onClose, onSuccess, transaction }) => {
     const [formData, setFormData] = useState({
@@ -71,6 +72,7 @@ const EditTransactionModal = ({ isOpen, onClose, onSuccess, transaction }) => {
                 type: formData.type,
                 date: formData.date
             });
+            analytics.editTransaction(formData.type, parseFloat(formData.amount), formData.category);
             toast.success('Transaction updated successfully!');
             onSuccess();
             onClose();

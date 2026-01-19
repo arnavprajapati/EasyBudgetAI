@@ -4,6 +4,7 @@ import { fetchTelegramStatus } from "../redux/slices/telegramSlice";
 import api from "../apiIntercepter";
 import { toast } from "react-toastify";
 import { Trash2, Pencil } from "lucide-react";
+import analytics from "../utils/analytics";
 
 import TelegramOnboarding from "./components/TelegramOnboarding";
 import DailyTrendChart from "./components/Dashboard/DailyTrendChart";
@@ -35,6 +36,7 @@ const Home = () => {
 
     useEffect(() => {
         dispatch(fetchTelegramStatus());
+        analytics.pageView('Home', { hasExpenses: expenses.length > 0 });
     }, [dispatch]);
 
     useEffect(() => {
@@ -138,6 +140,7 @@ const Home = () => {
         setIsDeleting(true);
         try {
             await api.delete(`/api/v1/expense/${deleteModal.expense._id}`);
+            analytics.deleteTransaction(deleteModal.expense.type, deleteModal.expense.amount);
             toast.success('Transaction deleted successfully');
             setDeleteModal({ isOpen: false, expense: null });
             fetchExpenses();

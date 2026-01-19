@@ -4,6 +4,7 @@ import { Users, TrendingUp, TrendingDown, ChevronRight, Search, RefreshCw, Arrow
 import api from '../apiIntercepter';
 import { toast } from 'react-toastify';
 import PartyDetailModal from './components/Dashboard/PartyDetailModal';
+import analytics from '../utils/analytics';
 
 const Party = () => {
     const navigate = useNavigate();
@@ -16,6 +17,7 @@ const Party = () => {
 
     useEffect(() => {
         fetchParties();
+        analytics.pageView('Khata Book', { totalParties: parties.length });
     }, []);
 
     const fetchParties = async () => {
@@ -43,6 +45,7 @@ const Party = () => {
     const handlePartyClick = (party) => {
         setSelectedParty(party);
         setShowDetailModal(true);
+        analytics.viewPartyDetails(party.name, party.netBalance);
     };
 
     const formatCurrency = (amount) => {

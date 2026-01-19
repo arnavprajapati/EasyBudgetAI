@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import api from '../../../apiIntercepter';
 import { toast } from 'react-toastify';
+import analytics from '../../../utils/analytics';
 
 const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
     const [newExpense, setNewExpense] = useState({
@@ -41,7 +42,6 @@ const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Reset category when type changes
     useEffect(() => {
         if (newExpense.type === 'debit') {
             setNewExpense(prev => ({ ...prev, category: 'Miscellaneous' }));
@@ -54,6 +54,7 @@ const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
         e.preventDefault();
         try {
             await api.post('/api/v1/expense/add', newExpense);
+            analytics.addTransaction(newExpense.type, parseFloat(newExpense.amount), newExpense.category);
             toast.success('Transaction added successfully!');
             setNewExpense({ amount: '', description: '', category: 'Miscellaneous', type: 'debit' });
             onSuccess();
