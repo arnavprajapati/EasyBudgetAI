@@ -1,29 +1,21 @@
-import * as amplitude from '@amplitude/unified';
+import * as amplitude from '@amplitude/analytics-browser';
 
 const AMPLITUDE_API_KEY = import.meta.env.VITE_AMPLITUDE_API_KEY;
 
 if (AMPLITUDE_API_KEY) {
-    amplitude.initAll(AMPLITUDE_API_KEY, {
-        analytics: {
-            autocapture: {
-                attribution: true,
-                fileDownloads: true,
-                formInteractions: true,
-                pageViews: true,
-                sessions: true,
-                elementInteractions: true
-            },
-            sampleRate: 1
-        }
+    amplitude.init(AMPLITUDE_API_KEY, {
+        defaultTracking: {
+            sessions: true,
+            pageViews: true,
+            formInteractions: true,
+            fileDownloads: true,
+        },
     });
 }
 
 export const trackEvent = (eventName, properties = {}) => {
     if (AMPLITUDE_API_KEY) {
-        amplitude.track(eventName, {
-            ...properties,
-            timestamp: new Date().toISOString()
-        });
+        amplitude.track(eventName, properties);
     }
 };
 
