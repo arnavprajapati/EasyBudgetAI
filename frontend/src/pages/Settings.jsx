@@ -369,7 +369,7 @@ const Settings = () => {
                                                 <CheckCircle2 className="text-green-600" size={20} />
                                                 <p className="font-bold text-green-900">Telegram account connected!</p>
                                             </div>
-                                            <p className="text-sm text-green-700">You'll now receive instant notifications for all expenses</p>
+                                            <p className="text-sm text-green-700 font-semibold">You'll now receive instant notifications for all expenses</p>
                                         </div>
 
                                         <button
