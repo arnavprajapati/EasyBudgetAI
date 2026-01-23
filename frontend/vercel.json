@@ -1,12 +1,12 @@
 {
     "rewrites": [
         {
-            "source": "/api/(.*)",
-            "destination": "https://api.smartkhata.me/api/$1"
+            "source": "/api/m/:path*",
+            "destination": "https://api2.amplitude.com/:path*"
         },
         {
-            "source": "/ingest/:path*",
-            "destination": "https://api2.amplitude.com/:path*"
+            "source": "/api/(.*)",
+            "destination": "https://api.smartkhata.me/api/$1"
         },
         {
             "source": "/(.*)",
