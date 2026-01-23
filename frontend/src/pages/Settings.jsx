@@ -24,11 +24,12 @@ const Settings = () => {
     const [usernameError, setUsernameError] = useState("");
     const [needsToStartBot, setNeedsToStartBot] = useState(false);
     const [otpSentToTelegram, setOtpSentToTelegram] = useState(false);
-    const [otpVerified, setOtpVerified] = useState(false);
 
     const [otpInput, setOtpInput] = useState("");
     const [verifyingOTP, setVerifyingOTP] = useState(false);
     const [otpError, setOtpError] = useState("");
+    const [otpVerified, setOtpVerified] = useState(false);
+    const [linkVerified, setLinkVerified] = useState(false);
 
     useEffect(() => {
         dispatch(fetchTelegramStatus());
@@ -114,8 +115,24 @@ const Settings = () => {
         setNeedsToStartBot(false);
         setOtpSentToTelegram(false);
         setOtpVerified(false);
+        setLinkVerified(false);
         dispatch(fetchTelegramStatus());
     };
+
+    // Auto check if link is verified after OTP verification
+    useEffect(() => {
+        let interval;
+        if (otpVerified && !linkVerified && !linked) {
+            interval = setInterval(async () => {
+                const result = await dispatch(fetchTelegramStatus());
+                if (result.payload?.linked) {
+                    setLinkVerified(true);
+                    clearInterval(interval);
+                }
+            }, 3000);
+        }
+        return () => clearInterval(interval);
+    }, [otpVerified, linkVerified, linked, dispatch]);
 
     return (
         <div className="min-h-screen bg-gray-50 py-10 px-4">
@@ -235,10 +252,30 @@ const Settings = () => {
                                 {!otpGenerated ? (
                                     <>
                                         <div className="mb-5">
-                                            <h3 className="font-bold text-gray-800 text-lg mb-1">Enter Your Username</h3>
-                                            <p className="text-sm text-gray-500 font-semibold">
-                                                For OTP & notifications: Scan QR or search bot → Press <span className="text-[#0088cc] font-semibold">Start</span> → Enter username below
-                                            </p>
+                                            <h3 className="font-bold text-gray-800 text-lg mb-3">Enter Your Username</h3>
+                                            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-5 mb-4">
+                                                <p className="text-sm text-gray-600 font-semibold mb-3">
+                                                    For OTP & notifications:
+                                                </p>
+                                                <div className="space-y-3 text-sm text-gray-700">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                                                        <p className="text-sm text-gray-700 font-semibold">Scan QR or search bot</p>
+                                                    </div>
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+                                                        <p className="text-sm text-gray-700 font-semibold">Press <span className="text-[#0088cc] font-bold">Start</span></p>
+                                                    </div>
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+                                                        <p className="text-sm text-gray-700 font-semibold">Enter username below</p>
+                                                    </div>
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">4</div>
+                                                        <p className="text-sm text-gray-700 font-semibold">Click Send OTP to receive code</p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-4">
@@ -269,30 +306,7 @@ const Settings = () => {
                                             </button>
                                         </div>
                                     </>
-                                ) : otpVerified ? (
-                                    <>
-                                        <div className="text-center mb-5">
-                                            <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-200">
-                                                <CheckCircle2 className="text-white" size={32} />
-                                            </div>
-                                            <h3 className="font-bold text-gray-800 text-xl mb-1">Account Linked! ✓</h3>
-                                            <p className="text-sm text-gray-500 font-semibold">Now paste this code in Telegram chat</p>
-                                        </div>
-
-                                        <div className="bg-gray-100 rounded-xl p-4 mb-5">
-                                            <p className="text-xs text-gray-400 font-medium text-center mb-2 uppercase tracking-wider font-semibold">Your OTP Code</p>
-                                            <p className="text-3xl font-mono font-bold text-center text-gray-800 tracking-[0.3em]">{otpInput}</p>
-                                        </div>
-
-                                        <button
-                                            onClick={resetModal}
-                                            className="w-full bg-gradient-to-r from-[#0088cc] to-[#00a2e8] text-white py-3.5 rounded-xl font-semibold cursor-pointer  hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <CheckCircle2 size={18} />
-                                            Done
-                                        </button>
-                                    </>
-                                ) : (
+                                ) : !otpVerified ? (
                                     <>
                                         <div className="text-center mb-5">
                                             <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-green-200">
@@ -339,6 +353,81 @@ const Settings = () => {
                                                 Resend OTP
                                             </button>
                                         </div>
+                                    </>
+                                ) : linkVerified ? (
+                                    <>
+                                        <div className="text-center mb-5">
+                                            <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-200 animate-bounce">
+                                                <CheckCircle2 className="text-white" size={32} />
+                                            </div>
+                                            <h3 className="font-bold text-gray-800 text-2xl mb-2">Successfully Linked! ✓</h3>
+                                            <p className="text-sm text-gray-600 font-semibold">Your Telegram account is now connected</p>
+                                        </div>
+
+                                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-5 mb-5">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <CheckCircle2 className="text-green-600" size={20} />
+                                                <p className="font-bold text-green-900">Telegram account connected!</p>
+                                            </div>
+                                            <p className="text-sm text-green-700">You'll now receive instant notifications for all expenses</p>
+                                        </div>
+
+                                        <button
+                                            onClick={resetModal}
+                                            className="w-full bg-gradient-to-r from-[#0088cc] to-[#00a2e8] text-white py-3.5 rounded-xl font-semibold cursor-pointer hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <CheckCircle2 size={18} />
+                                            Done
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="text-center mb-5">
+                                            <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-200 relative">
+                                                <MessageSquare className="text-white" size={28} />
+                                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse"></span>
+                                            </div>
+                                            <h3 className="font-bold text-gray-800 text-lg mb-1">OTP Sent to Telegram!</h3>
+                                            <p className="text-sm text-gray-500 font-semibold">Check your bot chat</p>
+                                        </div>
+
+                                        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-5 mb-5">
+                                            <div className="space-y-3">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                                                    <p className="text-sm text-gray-700 font-semibold">Open <span className="font-bold text-[#0088cc]">@smart_khata_bot</span> on Telegram</p>
+                                                </div>
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+                                                    <p className="text-sm text-gray-700 font-semibold">You will receive a 6-digit OTP code in the chat</p>
+                                                </div>
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+                                                    <p className="text-sm text-gray-700 font-semibold">Copy and paste that code back in the bot chat</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-4">
+                                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                            <span className="font-semibold">Waiting for verification...</span>
+                                        </div>
+
+                                        <button
+                                            onClick={openTelegramBot}
+                                            className="w-full bg-gradient-to-r from-[#0088cc] to-[#00a2e8] text-white py-3.5 rounded-xl font-semibold cursor-pointer hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Send size={18} />
+                                            Open Telegram Bot
+                                        </button>
+
+                                        <button
+                                            onClick={handleGenerateOTP}
+                                            disabled={generatingOTP}
+                                            className="w-full text-[#0088cc] text-sm font-semibold hover:underline cursor-pointer disabled:opacity-50 py-2 mt-3"
+                                        >
+                                            Resend OTP
+                                        </button>
                                     </>
                                 )}
                             </div>
