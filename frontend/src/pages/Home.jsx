@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchTelegramStatus } from "../redux/slices/telegramSlice";
 import api from "../apiIntercepter";
 import { toast } from "react-toastify";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil, Search, ChevronDown } from "lucide-react";
 import analytics from "../utils/analytics";
 
 import TelegramOnboarding from "./components/TelegramOnboarding";
@@ -27,6 +27,9 @@ const Home = () => {
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, expense: null });
     const [isDeleting, setIsDeleting] = useState(false);
     const [editModal, setEditModal] = useState({ isOpen: false, expense: null });
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const [summary, setSummary] = useState({
         totalIncome: 0,
         totalExpense: 0,
@@ -93,8 +96,27 @@ const Home = () => {
             default:
                 filtered = expenses;
         }
+
+        // Filter by search query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(exp => 
+                (exp.description?.toLowerCase().includes(query)) ||
+                (exp.category?.toLowerCase().includes(query)) ||
+                (exp.partyName?.toLowerCase().includes(query))
+            );
+        }
+
+        // Filter by category
+        if (selectedCategory !== 'all') {
+            filtered = filtered.filter(exp => exp.category === selectedCategory);
+        }
+
         return filtered;
     };
+
+    // Get unique categories from expenses
+    const uniqueCategories = [...new Set(expenses.map(exp => exp.category).filter(Boolean))].sort();
 
     const calculateSummary = () => {
         const filtered = getFilteredExpenses();
@@ -278,16 +300,122 @@ const Home = () => {
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="text-lg font-bold text-gray-800">
-                            Recent Transactions 
-                            <span className="text-gray-400 font-semibold text-sm ml-2">
-                                ({period === 'week' ? 'Last 7 Days' : period === 'month' ? 'Last Month' : 'Last 3 Months'})
-                            </span>
-                        </h2>
-                        <a href="/dashboard" className="text-sm text-[#387ED1] font-semibold hover:underline">
-                            View All →
-                        </a>
+                    <div className="p-5 border-b border-gray-100">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <h2 className="text-lg font-bold text-gray-800">
+                                Recent Transactions 
+                                <span className="text-gray-400 font-semibold text-sm ml-2">
+                                    ({period === 'week' ? 'Last 7 Days' : period === 'month' ? 'Last Month' : 'Last 3 Months'})
+                                </span>
+                            </h2>
+                            <a href="/dashboard" className="hidden md:block text-sm text-[#387ED1] font-semibold hover:underline">
+                                View All →
+                            </a>
+                        </div>
+                        
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
+                            <div className="relative flex-1 max-w-md">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by description, category or party..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+                            
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                                    className="flex items-center justify-between gap-2 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:border-gray-400 focus:outline-none focus:border-blue-500 transition-all min-w-[160px] cursor-pointer bg-white"
+                                >
+                                    <span>{selectedCategory === 'all' ? 'All Categories' : selectedCategory}</span>
+                                    <ChevronDown size={16} className={`text-gray-500 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+                                </button>
+                                
+                                {showCategoryDropdown && (
+                                    <>
+                                        <div 
+                                            className="fixed inset-0 z-10" 
+                                            onClick={() => setShowCategoryDropdown(false)}
+                                        />
+                                        <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-xl z-20 max-h-72 overflow-y-auto py-1">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedCategory('all');
+                                                    setShowCategoryDropdown(false);
+                                                }}
+                                                className={`w-full text-left px-4 py-3 text-sm font-semibold transition-colors cursor-pointer flex items-center justify-between ${selectedCategory === 'all' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+                                            >
+                                                <span>All Categories</span>
+                                                {selectedCategory === 'all' && (
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                            {uniqueCategories.map((category) => (
+                                                <button
+                                                    key={category}
+                                                    onClick={() => {
+                                                        setSelectedCategory(category);
+                                                        setShowCategoryDropdown(false);
+                                                    }}
+                                                    className={`w-full text-left px-4 py-3 text-sm font-semibold transition-colors cursor-pointer flex items-center justify-between ${selectedCategory === category ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+                                                >
+                                                    <span>{category}</span>
+                                                    {selectedCategory === category && (
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                            
+                            <a href="/dashboard" className="md:hidden text-sm text-[#387ED1] font-semibold hover:underline text-center">
+                                View All →
+                            </a>
+                        </div>
+                        
+                        {(searchQuery || selectedCategory !== 'all') && (
+                            <div className="flex items-center gap-2 mt-3 flex-wrap">
+                                <span className="text-xs text-gray-500 font-semibold">Filters:</span>
+                                {searchQuery && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold">
+                                        Search: "{searchQuery}"
+                                        <button onClick={() => setSearchQuery('')} className="hover:text-blue-900 cursor-pointer">✕</button>
+                                    </span>
+                                )}
+                                {selectedCategory !== 'all' && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold">
+                                        {selectedCategory}
+                                        <button onClick={() => setSelectedCategory('all')} className="hover:text-purple-900 cursor-pointer">✕</button>
+                                    </span>
+                                )}
+                                <button
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setSelectedCategory('all');
+                                    }}
+                                    className="text-xs text-gray-500 hover:text-gray-700 underline cursor-pointer font-semibold"
+                                >
+                                    Clear all
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {filteredExpenses.length === 0 ? (

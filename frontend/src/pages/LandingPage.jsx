@@ -7,6 +7,7 @@ function LandingPage() {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [authView, setAuthView] = useState('login');
     const [activeTab, setActiveTab] = useState('expenses');
+    const [showScrollTop, setShowScrollTop] = useState(false);
     const context = useOutletContext() || {};
 
     const navigate = useNavigate();
@@ -14,6 +15,18 @@ function LandingPage() {
     const openAuthModal = (view) => {
         setAuthView(view);
         setShowAuthModal(true);
+    };
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setShowScrollTop(window.scrollY > 400);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     useEffect(() => {
@@ -398,7 +411,7 @@ function LandingPage() {
                     </div>
 
                     <div className="flex flex-col lg:flex-row gap-6 justify-center items-center lg:items-stretch">
-                        <div className="w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
+                        <div className="w-[260px] md:w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
                             <div className="bg-white rounded-[1.5rem] p-3 h-[420px] md:h-[380px] flex flex-col">
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
                                     <img
@@ -452,7 +465,7 @@ function LandingPage() {
                             </div>
                         </div>
 
-                        <div className="w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
+                        <div className="w-[260px] md:w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
                             <div className="bg-white rounded-[1.5rem] p-3 h-[420px] md:h-[380px] flex flex-col">
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
                                     <img
@@ -503,7 +516,7 @@ function LandingPage() {
                             </div>
                         </div>
 
-                        <div className="w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
+                        <div className="w-[260px] md:w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
                             <div className="bg-white rounded-[1.5rem] p-3 h-[420px] md:h-[380px] flex flex-col">
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
                                     <img
@@ -548,7 +561,7 @@ function LandingPage() {
                             </div>
                         </div>
 
-                        <div className="w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
+                        <div className="w-[260px] md:w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
                             <div className="bg-white rounded-[1.5rem] p-3 h-[420px] md:h-[380px] flex flex-col">
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
                                     <img
@@ -603,7 +616,7 @@ function LandingPage() {
                             </div>
                         </div>
 
-                        <div className="w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
+                        <div className="w-[260px] md:w-[320px] bg-gray-800 rounded-[2rem] p-2.5 shadow-2xl">
                             <div className="bg-white rounded-[1.5rem] p-3 h-[420px] md:h-[380px] flex flex-col">
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
                                     <img
@@ -922,6 +935,18 @@ function LandingPage() {
                     onClose={() => setShowAuthModal(false)}
                     initialView={authView}
                 />
+            )}
+
+            {showScrollTop && (
+                <button
+                    onClick={scrollToTop}
+                    className="fixed bottom-6 right-6 z-50 w-12 h-12 bg-gradient-to-br from-[#387ED1] to-[#2563eb] text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 flex items-center justify-center cursor-pointer"
+                    aria-label="Scroll to top"
+                >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                </button>
             )}
         </main>
     );
