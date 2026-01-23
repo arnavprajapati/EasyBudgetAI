@@ -1,66 +1,12 @@
-import * as amplitude from '@amplitude/analytics-browser';
-
-const AMPLITUDE_API_KEY = import.meta.env.VITE_AMPLITUDE_API_KEY;
-
-let isInitialized = false;
-
-const initializeAmplitude = () => {
-    if (!AMPLITUDE_API_KEY) {
-        console.warn('Amplitude API key not found in environment variables');
-        return;
-    }
-
-    if (isInitialized) return;
-
-    try {
-        amplitude.init(AMPLITUDE_API_KEY, {
-            serverUrl: '/api/m/2/httpapi',
-            defaultTracking: {
-                sessions: true,
-                pageViews: true,
-                formInteractions: false,
-                fileDownloads: false,
-            },
-            logLevel: import.meta.env.DEV ? amplitude.Types.LogLevel.Warn : amplitude.Types.LogLevel.None,
-        });
-        isInitialized = true;
-    } catch (error) {
-        console.error('Failed to initialize Amplitude:', error);
-    }
-};
-
-if (AMPLITUDE_API_KEY) {
-    initializeAmplitude();
-}
-
-export const trackEvent = (eventName, properties = {}) => {
-    if (!isInitialized) return;
-    
-    try {
-        amplitude.track(eventName, properties);
-    } catch (error) {
-        if (import.meta.env.DEV) {
-            console.error('Amplitude track error:', error);
-        }
+const trackEvent = (eventName, properties = {}) => {
+    if (import.meta.env.DEV) {
+        console.log(`[Analytics] ${eventName}`, properties);
     }
 };
 
 export const identifyUser = (userId, userProperties = {}) => {
-    if (!isInitialized) return;
-    
-    try {
-        amplitude.setUserId(userId);
-        if (Object.keys(userProperties).length > 0) {
-            const identify = new amplitude.Identify();
-            Object.entries(userProperties).forEach(([key, value]) => {
-                identify.set(key, value);
-            });
-            amplitude.identify(identify);
-        }
-    } catch (error) {
-        if (import.meta.env.DEV) {
-            console.error('Amplitude identify error:', error);
-        }
+    if (import.meta.env.DEV) {
+        console.log(`[Analytics] Identify User: ${userId}`, userProperties);
     }
 };
 
@@ -91,4 +37,5 @@ export const analytics = {
     error: (errorType, message) => trackEvent('Error Occurred', { errorType, message })
 };
 
+export { trackEvent };
 export default analytics;

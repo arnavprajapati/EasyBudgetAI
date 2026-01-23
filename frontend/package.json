@@ -10,10 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@amplitude/analytics-browser": "^2.33.5",
     "@amplitude/unified": "^1.0.0-beta.30",
     "@reduxjs/toolkit": "^2.11.0",
     "@tailwindcss/vite": "^4.1.17",
+    "@vercel/analytics": "^1.6.1",
     "axios": "^1.13.2",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.562.0",
