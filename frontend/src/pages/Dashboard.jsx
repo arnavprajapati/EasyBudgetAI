@@ -10,12 +10,13 @@ import CategoryPieChart from './components/Dashboard/CategoryPieChart';
 import RecentTransactions from './components/Dashboard/RecentTransactions';
 import AddTransactionModal from './components/Dashboard/AddTransactionModal';
 import TimeFilter from './components/Dashboard/TimeFilter';
-import { Plus, BookOpen } from 'lucide-react';
+import { Plus, BookOpen, RefreshCw } from 'lucide-react';
 
 const Dashboard = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [period, setPeriod] = useState('month');
     const [summary, setSummary] = useState(null);
     const [recentExpenses, setRecentExpenses] = useState([]);
@@ -77,9 +78,13 @@ const Dashboard = () => {
         setFilteredExpenses(filtered);
     };
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = async (isRefresh = false) => {
         try {
-            setLoading(true);
+            if (isRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
             const [summaryRes, expensesRes] = await Promise.all([
                 api.get(`/api/v1/expense/summary?period=${period}`),
                 api.get('/api/v1/expense/all?limit=1000')
@@ -87,11 +92,15 @@ const Dashboard = () => {
 
             setSummary(summaryRes.data);
             setRecentExpenses(expensesRes.data.expenses);
+            if (isRefresh) {
+                toast.success('Data refreshed!');
+            }
         } catch (error) {
             toast.error('Failed to load dashboard data');
             console.error(error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
@@ -224,6 +233,14 @@ const Dashboard = () => {
                         Spending Insights & Analysis
                     </h1>
                     <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                        <button
+                            onClick={() => fetchDashboardData(true)}
+                            disabled={refreshing}
+                            className="flex items-center justify-center p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+                            title="Refresh data"
+                        >
+                            <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+                        </button>
                         <TimeFilter
                             selectedPeriod={period}
                             onPeriodChange={setPeriod}

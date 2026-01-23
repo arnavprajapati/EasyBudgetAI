@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchTelegramStatus } from "../redux/slices/telegramSlice";
 import api from "../apiIntercepter";
 import { toast } from "react-toastify";
-import { Trash2, Pencil, Search, ChevronDown } from "lucide-react";
+import { Trash2, Pencil, Search, ChevronDown, RefreshCw } from "lucide-react";
 import analytics from "../utils/analytics";
 
 import TelegramOnboarding from "./components/TelegramOnboarding";
@@ -20,6 +20,7 @@ const Home = () => {
 
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [period, setPeriod] = useState('week');
     const [showAddModal, setShowAddModal] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -57,11 +58,18 @@ const Home = () => {
         setCurrentPage(1); 
     }, [expenses, period]);
 
-    const fetchExpenses = async () => {
+    const fetchExpenses = async (isRefresh = false) => {
         try {
-            setLoading(true);
+            if (isRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
             const response = await api.get('/api/v1/expense/all?limit=1000');
             setExpenses(response.data.expenses || []);
+            if (isRefresh) {
+                toast.success('Data refreshed!');
+            }
         } catch (error) {
             console.error('Failed to fetch expenses:', error);
             if (error.response?.status !== 401 && error.response?.status !== 403) {
@@ -69,6 +77,7 @@ const Home = () => {
             }
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
@@ -242,6 +251,14 @@ const Home = () => {
                         </h1>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                        <button
+                            onClick={() => fetchExpenses(true)}
+                            disabled={refreshing}
+                            className="flex items-center justify-center p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+                            title="Refresh data"
+                        >
+                            <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+                        </button>
                         <TimeFilter selectedPeriod={period} onPeriodChange={setPeriod} maxPeriod="3months" />
                         <a
                             href="/party"
