@@ -14,6 +14,7 @@ const initializeAmplitude = () => {
 
     try {
         amplitude.init(AMPLITUDE_API_KEY, {
+            serverUrl: '/ingest/2/httpapi',
             defaultTracking: {
                 sessions: true,
                 pageViews: true,

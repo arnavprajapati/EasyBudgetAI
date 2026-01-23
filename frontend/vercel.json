@@ -5,6 +5,10 @@
             "destination": "https://api.smartkhata.me/api/$1"
         },
         {
+            "source": "/ingest/:path*",
+            "destination": "https://api2.amplitude.com/:path*"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }
