@@ -92,9 +92,6 @@ const Dashboard = () => {
 
             setSummary(summaryRes.data);
             setRecentExpenses(expensesRes.data.expenses);
-            if (isRefresh) {
-                toast.success('Data refreshed!');
-            }
         } catch (error) {
             toast.error('Failed to load dashboard data');
             console.error(error);
@@ -233,14 +230,6 @@ const Dashboard = () => {
                         Spending Insights & Analysis
                     </h1>
                     <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                        <button
-                            onClick={() => fetchDashboardData(true)}
-                            disabled={refreshing}
-                            className="flex items-center justify-center p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
-                            title="Refresh data"
-                        >
-                            <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-                        </button>
                         <TimeFilter
                             selectedPeriod={period}
                             onPeriodChange={setPeriod}
@@ -269,10 +258,34 @@ const Dashboard = () => {
                     onViewChange={setSelectedView}
                 />
 
-                <CategoryBarChart
-                    chartData={chartData}
-                    selectedView={selectedView}
-                />
+                <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-2 border-dashed border-[#E0E0E0] p-6 mb-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-bold text-[#212529]">
+                            {selectedView === 'all' ? 'All Categories Breakdown' : selectedView === 'credit' ? 'Income Sources' : 'Expense Categories'}
+                        </h2>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => fetchDashboardData(true)}
+                                disabled={refreshing}
+                                className="flex items-center justify-center p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                                title="Refresh data"
+                            >
+                                <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                            </button>
+                            <div className={`px-4 py-2 rounded-lg font-bold text-sm ${selectedView === 'credit' ? 'bg-[#00D563]/10 text-[#00D563]' :
+                                    selectedView === 'debit' ? 'bg-[#FF3B3B]/10 text-[#FF3B3B]' :
+                                        'bg-[#4F9CF9]/10 text-[#4F9CF9]'
+                                }`}>
+                                {chartData.length} Categories
+                            </div>
+                        </div>
+                    </div>
+                    <CategoryBarChart
+                        chartData={chartData}
+                        selectedView={selectedView}
+                        hideHeader={true}
+                    />
+                </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <CategoryPieChart

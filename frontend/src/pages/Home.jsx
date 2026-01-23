@@ -67,9 +67,6 @@ const Home = () => {
             }
             const response = await api.get('/api/v1/expense/all?limit=1000');
             setExpenses(response.data.expenses || []);
-            if (isRefresh) {
-                toast.success('Data refreshed!');
-            }
         } catch (error) {
             console.error('Failed to fetch expenses:', error);
             if (error.response?.status !== 401 && error.response?.status !== 403) {
@@ -251,14 +248,6 @@ const Home = () => {
                         </h1>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                        <button
-                            onClick={() => fetchExpenses(true)}
-                            disabled={refreshing}
-                            className="flex items-center justify-center p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
-                            title="Refresh data"
-                        >
-                            <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-                        </button>
                         <TimeFilter selectedPeriod={period} onPeriodChange={setPeriod} maxPeriod="3months" />
                         <a
                             href="/party"
@@ -286,8 +275,16 @@ const Home = () => {
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-                    <div className="p-5 border-b border-gray-100">
+                    <div className="p-5 border-b border-gray-100 flex items-center justify-between">
                         <h2 className="text-lg font-bold text-gray-800">Transaction Overview</h2>
+                        <button
+                            onClick={() => fetchExpenses(true)}
+                            disabled={refreshing}
+                            className="flex items-center justify-center p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                            title="Refresh data"
+                        >
+                            <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                        </button>
                     </div>
 
                     <div className="grid grid-cols-3 border-b border-gray-100">
