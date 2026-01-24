@@ -13,11 +13,25 @@ const schema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
     },
     role: {
       type: String,
       default: "user",
+    },
+    firebaseUid: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    authProvider: {
+      type: String,
+      enum: ["email", "google"],
+      default: "email",
+    },
+    photoURL: {
+      type: String,
+      default: null,
     },
     telegramUserId: {
       type: String,
