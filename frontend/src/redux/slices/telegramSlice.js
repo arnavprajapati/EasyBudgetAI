@@ -24,7 +24,7 @@ export const generateTelegramOTP = createAsyncThunk(
             toast.success('OTP generated! Check your Telegram bot.');
             return data;
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to generate OTP');
+            // toast.error(error.response?.data?.message || 'Failed to generate OTP');
             return rejectWithValue(error.response?.data?.message || 'Failed to generate OTP');
         }
     }
@@ -49,10 +49,10 @@ export const unlinkTelegram = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const { data } = await api.post('/api/v1/telegram/unlink');
-            toast.success(data.message);
+            // toast.success(data.message);
             return data;
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to unlink');
+            // toast.error(error.response?.data?.message || 'Failed to unlink');
             return rejectWithValue(error.response?.data?.message || 'Failed to unlink');
         }
     }
@@ -65,7 +65,7 @@ const telegramSlice = createSlice({
         telegramUsername: null,
         telegramLinkedAt: null,
         botUsername: null,
-        loading: false,
+        loading: true,
         error: null,
     },
     reducers: {

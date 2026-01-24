@@ -31,7 +31,7 @@ const Party = () => {
             const toGive = partiesList.reduce((sum, p) => sum + (p.toGive || 0), 0);
             setSummary({ toReceive, toGive });
         } catch (error) {
-            toast.error('Failed to load parties');
+            // toast.error('Failed to load parties');
             console.error(error);
         } finally {
             setLoading(false);

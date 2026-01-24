@@ -21,7 +21,7 @@ const PartyManagement = () => {
             const { data } = await api.get('/api/v1/expense/parties?limit=50');
             setParties(data.parties || []);
         } catch (error) {
-            toast.error('Failed to load parties');
+            // toast.error('Failed to load parties');
             console.error(error);
         } finally {
             setLoading(false);

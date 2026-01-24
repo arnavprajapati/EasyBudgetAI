@@ -18,7 +18,7 @@ const LendingCards = () => {
             setLendingSummary(response.data.summary);
         } catch (error) {
             console.error('Failed to fetch lending summary:', error);
-            toast.error('Failed to load lending data');
+            // toast.error('Failed to load lending data');
         } finally {
             setLoading(false);
         }

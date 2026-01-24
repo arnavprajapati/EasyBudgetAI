@@ -73,11 +73,11 @@ const EditTransactionModal = ({ isOpen, onClose, onSuccess, transaction }) => {
                 date: formData.date
             });
             analytics.editTransaction(formData.type, parseFloat(formData.amount), formData.category);
-            toast.success('Transaction updated successfully!');
+            // toast.success('Transaction updated successfully!');
             onSuccess();
             onClose();
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to update transaction');
+            // toast.error(error.response?.data?.message || 'Failed to update transaction');
         } finally {
             setIsSubmitting(false);
         }

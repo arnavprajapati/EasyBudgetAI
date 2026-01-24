@@ -70,7 +70,7 @@ const Home = () => {
         } catch (error) {
             console.error('Failed to fetch expenses:', error);
             if (error.response?.status !== 401 && error.response?.status !== 403) {
-                toast.error('Failed to load expenses');
+                // toast.error('Failed to load expenses');
             }
         } finally {
             setLoading(false);
@@ -169,12 +169,12 @@ const Home = () => {
         try {
             await api.delete(`/api/v1/expense/${deleteModal.expense._id}`);
             analytics.deleteTransaction(deleteModal.expense.type, deleteModal.expense.amount);
-            toast.success('Transaction deleted successfully');
+            // toast.success('Transaction deleted successfully');
             setDeleteModal({ isOpen: false, expense: null });
             fetchExpenses();
         } catch (error) {
             console.error('Failed to delete:', error);
-            toast.error('Failed to delete transaction');
+            // toast.error('Failed to delete transaction');
         } finally {
             setIsDeleting(false);
         }
@@ -233,8 +233,18 @@ const Home = () => {
 
     const filteredExpenses = getFilteredExpenses();
 
-    // Show onboarding if Telegram not linked
-    if (!telegramLoading && !linked) {
+    if (telegramLoading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-gray-500 font-semibold text-sm">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!linked) {
         return <TelegramOnboarding userName={userName} />;
     }
 

@@ -93,17 +93,17 @@ const Profile = () => {
         const { currentPassword, newPassword, confirmPassword } = passwordData;
 
         if (!currentPassword || !newPassword || !confirmPassword) {
-            toast.error("Please fill all fields");
+            // toast.error("Please fill all fields");
             return;
         }
 
         if (newPassword.length < 6) {
-            toast.error("New password must be at least 6 characters");
+            // toast.error("New password must be at least 6 characters");
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            toast.error("Passwords do not match");
+            // toast.error("Passwords do not match");
             return;
         }
 
@@ -113,11 +113,11 @@ const Profile = () => {
                 currentPassword,
                 newPassword
             });
-            toast.success("Password changed successfully!");
+            // toast.success("Password changed successfully!");
             setShowPasswordModal(false);
             setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
         } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to change password");
+            // toast.error(error.response?.data?.message || "Failed to change password");
         } finally {
             setChangingPassword(false);
         }
@@ -126,9 +126,9 @@ const Profile = () => {
     const handleForgotPassword = async () => {
         try {
             await api.post('/api/v1/forgot-password', { email: user?.email });
-            toast.success("Password reset link sent to your email!");
+            // toast.success("Password reset link sent to your email!");
         } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to send reset link");
+            // toast.error(error.response?.data?.message || "Failed to send reset link");
         }
     };
 

@@ -93,7 +93,7 @@ const Dashboard = () => {
             setSummary(summaryRes.data);
             setRecentExpenses(expensesRes.data.expenses);
         } catch (error) {
-            toast.error('Failed to load dashboard data');
+            // toast.error('Failed to load dashboard data');
             console.error(error);
         } finally {
             setLoading(false);

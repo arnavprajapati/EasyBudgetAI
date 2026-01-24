@@ -55,12 +55,12 @@ const AddTransactionModal = ({ isOpen, onClose, onSuccess }) => {
         try {
             await api.post('/api/v1/expense/add', newExpense);
             analytics.addTransaction(newExpense.type, parseFloat(newExpense.amount), newExpense.category);
-            toast.success('Transaction added successfully!');
+            // toast.success('Transaction added successfully!');
             setNewExpense({ amount: '', description: '', category: 'Miscellaneous', type: 'debit' });
             onSuccess();
             onClose();
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to add transaction');
+            // toast.error(error.response?.data?.message || 'Failed to add transaction');
         }
     };
 

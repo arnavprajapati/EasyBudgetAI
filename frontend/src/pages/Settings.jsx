@@ -70,7 +70,7 @@ const Settings = () => {
             setOtpSentToTelegram(result.otpSentToTelegram);
             setNeedsToStartBot(result.needsToStartBot);
         } catch (error) {
-            toast.error("Failed to generate OTP");
+            // toast.error("Failed to generate OTP");
         } finally {
             setGeneratingOTP(false);
         }
@@ -254,13 +254,13 @@ const Settings = () => {
                                         <div className="mb-5">
                                             <h3 className="font-bold text-gray-800 text-lg mb-3">Enter Your Username</h3>
                                             <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-5 mb-4">
-                                                <p className="text-sm text-gray-600 font-semibold mb-3">
+                                                <p className="text-base text-gray-600 font-semibold mb-3">
                                                     For OTP & notifications:
                                                 </p>
                                                 <div className="space-y-3 text-sm text-gray-700">
                                                     <div className="flex items-start gap-3">
                                                         <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
-                                                        <p className="text-sm text-gray-700 font-semibold">Scan QR or search bot</p>
+                                                        <p className="text-sm text-gray-700 font-semibold">Scan QR or Search Bot</p>
                                                     </div>
                                                     <div className="flex items-start gap-3">
                                                         <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
@@ -399,11 +399,11 @@ const Settings = () => {
                                                 </div>
                                                 <div className="flex items-start gap-3">
                                                     <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
-                                                    <p className="text-sm text-gray-700 font-semibold">You will receive a 6-digit OTP code in the chat</p>
+                                                    <p className="text-sm text-gray-700 font-semibold">Use the same OTP received on Telegram</p>
                                                 </div>
                                                 <div className="flex items-start gap-3">
                                                     <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
-                                                    <p className="text-sm text-gray-700 font-semibold">Copy and paste that code back in the bot chat</p>
+                                                    <p className="text-sm text-gray-700 font-semibold">Paste the OTP again to continue</p>
                                                 </div>
                                             </div>
                                         </div>

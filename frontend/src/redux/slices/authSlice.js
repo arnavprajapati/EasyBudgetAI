@@ -20,11 +20,11 @@ export const logoutUser = createAsyncThunk(
     async (navigate, { rejectWithValue }) => {
         try {
             const { data } = await api.post('/api/v1/logout');
-            toast.success(data.message);
+            // toast.success(data.message);
             navigate('/login');
             return data;
         } catch (error) {
-            toast.error('Something went wrong');
+            // toast.error('Something went wrong');
             return rejectWithValue(error.response?.data?.message || 'Logout failed');
         }
     }

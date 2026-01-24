@@ -34,7 +34,7 @@ const PartyDetailModal = ({ party, onClose }) => {
             setSummary(data.summary || { toReceive: 0, toGive: 0, netBalance: 0 });
             setPagination({ page: 1, pages: 1, total: data.summary?.transactionCount || 0 });
         } catch (error) {
-            toast.error('Failed to load transactions');
+            // toast.error('Failed to load transactions');
             console.error(error);
         } finally {
             setLoading(false);
@@ -87,12 +87,12 @@ const PartyDetailModal = ({ party, onClose }) => {
         setIsDeleting(true);
         try {
             await api.delete(`/api/v1/expense/${deleteModal.transaction._id}`);
-            toast.success('Transaction deleted successfully');
+            // toast.success('Transaction deleted successfully');
             setDeleteModal({ isOpen: false, transaction: null });
             fetchPartyTransactions(pagination.page);
         } catch (error) {
             console.error('Failed to delete:', error);
-            toast.error('Failed to delete transaction');
+            // toast.error('Failed to delete transaction');
         } finally {
             setIsDeleting(false);
         }

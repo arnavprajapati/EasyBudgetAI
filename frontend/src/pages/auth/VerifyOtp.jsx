@@ -30,11 +30,9 @@ const VerifyOtp = () => {
         setCSRFToken(data.sessionInfo.csrfToken);
       }
 
-      toast.success(data.message);
       dispatch(setAuth(true));
       dispatch(setUser(data.user));
       
-      // Identify user in Amplitude
       if (data.user) {
         identifyUser(data.user._id, {
           email: data.user.email,
