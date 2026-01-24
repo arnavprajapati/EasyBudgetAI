@@ -499,8 +499,15 @@ export const getPartyTransactions = TryCatch(async (req, res) => {
             toGive += txn.amount;
         }
 
+        let normalizedDescription = txn.description;
+        if (txn.partyName && txn.partyName.toLowerCase() !== partyName.toLowerCase()) {
+            const regex = new RegExp(txn.partyName, 'gi');
+            normalizedDescription = txn.description.replace(regex, partyName);
+        }
+
         return {
             ...txn,
+            description: normalizedDescription,
             khataType
         };
     });

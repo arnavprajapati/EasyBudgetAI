@@ -511,11 +511,17 @@ const handleCallbackQuery = async (callbackQuery) => {
             descLower.includes('to receive') ||
             descLower.includes('to pay');
 
+        let finalDescription = transaction.description;
+        if (selectedParty && transaction.partyName && selectedParty !== transaction.partyName) {
+            const regex = new RegExp(transaction.partyName, 'gi');
+            finalDescription = transaction.description.replace(regex, selectedParty);
+        }
+
         await Expense.create({
             userId: user._id,
             telegramId: telegramUserId,
             amount: transaction.amount,
-            description: transaction.description,
+            description: finalDescription,
             category: transaction.category,
             type: transaction.type,
             date: new Date(),
