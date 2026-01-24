@@ -14,6 +14,7 @@ import {
   verifyRefreshToken,
 } from "../config/generateToken.js";
 import { generateCSRFToken } from "../config/csrfMiddleware.js";
+import { firebaseAuth } from "../config/firebaseConfig.js";
 
 export const registerUser = TryCatch(async (req, res) => {
   const sanitezedBody = sanitize(req.body);
@@ -282,7 +283,6 @@ export const refreshToken = TryCatch(async (req, res) => {
   const decode = await verifyRefreshToken(refreshToken);
 
   if (!decode) {
-    // Clear cookies for cross-origin
     const clearOptions = {
       path: "/",
       secure: true,
@@ -310,7 +310,6 @@ export const logutUser = TryCatch(async (req, res) => {
 
   await revokeRefershToken(userId);
 
-  // Clear cookies for cross-origin
   const clearOptions = {
     path: "/",
     secure: true,
@@ -388,7 +387,6 @@ export const forgotPassword = TryCatch(async (req, res) => {
 
   const resetKey = `reset-password:${resetToken}`;
 
-  await redisClient.set(resetKey, JSON.stringify({ userId: user._id.toString(), email }), { EX: 900 }); // 15 minutes
 
   const subject = "Reset your password";
   const html = getResetPasswordHtml({ email, token: resetToken });
@@ -461,5 +459,82 @@ export const resetPassword = TryCatch(async (req, res) => {
 
   res.json({
     message: "Password reset successfully. Please login with your new password",
+  });
+});
+
+export const googleAuth = TryCatch(async (req, res) => {
+  const { idToken } = req.body;
+
+  if (!idToken) {
+    return res.status(400).json({
+      message: "Firebase ID token is required",
+    });
+  }
+
+  const rateLimitKey = `google-auth-rate-limit:${req.ip}`;
+  if (await redisClient.get(rateLimitKey)) {
+    return res.status(429).json({
+      message: "Too many requests, try again later",
+    });
+  }
+
+  let decodedToken;
+  try {
+    decodedToken = await firebaseAuth.verifyIdToken(idToken);
+  } catch (error) {
+    console.error("Firebase token verification failed:", error.message);
+    return res.status(401).json({
+      message: "Invalid or expired token",
+    });
+  }
+
+  const { uid, email, name, picture } = decodedToken;
+
+  if (!email) {
+    return res.status(400).json({
+      message: "Email is required for authentication",
+    });
+  }
+
+  let user = await User.findOne({ email });
+
+  if (user) {
+    if (!user.firebaseUid) {
+      user.firebaseUid = uid;
+      user.authProvider = "google";
+      if (picture) user.photoURL = picture;
+      await user.save();
+    }
+  } else {
+    user = await User.create({
+      name: name || email.split("@")[0],
+      email,
+      firebaseUid: uid,
+      authProvider: "google",
+      photoURL: picture || null,
+    });
+  }
+
+  await redisClient.del(`user:${user._id}`);
+
+  const tokenData = await generateToken(user._id, res);
+
+  await redisClient.set(rateLimitKey, "true", { EX: 60 });
+
+  res.status(200).json({
+    message: `Welcome ${user.name}`,
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      authProvider: user.authProvider,
+      photoURL: user.photoURL,
+    },
+    sessionInfo: {
+      sessionId: tokenData.sessionId,
+      loginTime: new Date().toISOString(),
+      csrfToken: tokenData.csrfToken,
+    },
   });
 });

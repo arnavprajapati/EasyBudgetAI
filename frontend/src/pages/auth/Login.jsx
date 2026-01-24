@@ -5,6 +5,7 @@ import axios from "axios";
 import { server } from "../../main";
 import { X } from "lucide-react";
 import analytics from "../../utils/analytics";
+import GoogleSignInButton from "./GoogleSignInButton";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -95,6 +96,14 @@ const Login = () => {
               {btnLoading ? 'Processing...' : 'Login'}
             </button>
           </form>
+
+          <div className="flex items-center gap-4 my-4">
+            <div className="flex-1 h-px bg-gray-300"></div>
+            <span className="text-gray-500 text-sm font-medium">OR</span>
+            <div className="flex-1 h-px bg-gray-300"></div>
+          </div>
+
+          <GoogleSignInButton />
 
           <div className="mt-4 text-center text-sm">
             <Link
