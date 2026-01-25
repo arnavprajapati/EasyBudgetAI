@@ -1,8 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api, { setCSRFToken } from '../../apiIntercepter.js';
 import { toast } from 'react-toastify';
+import { signOut } from 'firebase/auth';
+import { auth } from '../../config/firebaseConfig';
 
-// Async thunks
 export const fetchUser = createAsyncThunk(
     'auth/fetchUser',
     async (_, { rejectWithValue }) => {
@@ -20,24 +21,27 @@ export const logoutUser = createAsyncThunk(
     async (navigate, { rejectWithValue }) => {
         try {
             const { data } = await api.post('/api/v1/logout');
-            // toast.success(data.message);
+            
+            try {
+                await signOut(auth);
+            } catch (firebaseError) {
+                console.warn('Firebase signOut warning:', firebaseError);
+            }
+            
             navigate('/login');
             return data;
         } catch (error) {
-            // toast.error('Something went wrong');
             return rejectWithValue(error.response?.data?.message || 'Logout failed');
         }
     }
 );
 
-// Google Sign-In - verifies Firebase token with backend, gets JWT + CSRF tokens
 export const googleLogin = createAsyncThunk(
     'auth/googleLogin',
     async (idToken, { rejectWithValue }) => {
         try {
             const { data } = await api.post('/api/v1/google-auth', { idToken });
             
-            // Store CSRF token from response (same as email OTP verify)
             if (data.sessionInfo?.csrfToken) {
                 setCSRFToken(data.sessionInfo.csrfToken);
             }
@@ -70,7 +74,6 @@ const authSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // Fetch User
             .addCase(fetchUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -86,12 +89,10 @@ const authSlice = createSlice({
                 state.isAuth = false;
                 state.error = action.payload;
             })
-            // Logout User
             .addCase(logoutUser.fulfilled, (state) => {
                 state.user = null;
                 state.isAuth = false;
             })
-            // Google Login
             .addCase(googleLogin.pending, (state) => {
                 state.loading = true;
                 state.error = null;

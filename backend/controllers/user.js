@@ -471,13 +471,6 @@ export const googleAuth = TryCatch(async (req, res) => {
     });
   }
 
-  const rateLimitKey = `google-auth-rate-limit:${req.ip}`;
-  if (await redisClient.get(rateLimitKey)) {
-    return res.status(429).json({
-      message: "Too many requests, try again later",
-    });
-  }
-
   let decodedToken;
   try {
     decodedToken = await firebaseAuth.verifyIdToken(idToken);
@@ -493,6 +486,14 @@ export const googleAuth = TryCatch(async (req, res) => {
   if (!email) {
     return res.status(400).json({
       message: "Email is required for authentication",
+    });
+  }
+
+  // Rate limit per email (not per IP) to allow account switching
+  const rateLimitKey = `google-auth-rate-limit:${email}`;
+  if (await redisClient.get(rateLimitKey)) {
+    return res.status(429).json({
+      message: "Too many requests for this account, try again later",
     });
   }
 
@@ -519,7 +520,7 @@ export const googleAuth = TryCatch(async (req, res) => {
 
   const tokenData = await generateToken(user._id, res);
 
-  await redisClient.set(rateLimitKey, "true", { EX: 60 });
+  await redisClient.set(rateLimitKey, "true", { EX: 15 });
 
   res.status(200).json({
     message: `Welcome ${user.name}`,
