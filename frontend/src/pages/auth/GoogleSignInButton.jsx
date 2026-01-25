@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { signInWithPopup, signOut } from "firebase/auth";
+import React, { useState, useEffect } from "react";
+import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from "firebase/auth";
 import { auth, googleProvider } from "../../config/firebaseConfig";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -11,20 +11,47 @@ const GoogleSignInButton = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          setLoading(true);
+          const idToken = await result.user.getIdToken();
+          const response = await dispatch(googleLogin(idToken)).unwrap();
+          toast.success(`Welcome ${response.name}`);
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("Redirect Sign-In Error:", error);
+        toast.error(error.message || "Google Sign-In failed");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    handleRedirectResult();
+  }, [dispatch, navigate]);
+
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
       await signOut(auth);
       
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-
-      const idToken = await user.getIdToken();
-
-      const response = await dispatch(googleLogin(idToken)).unwrap();
-
-      toast.success(`Welcome ${response.name}`);
-      navigate("/");
+      if (isMobile()) {
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+        const idToken = await user.getIdToken();
+        const response = await dispatch(googleLogin(idToken)).unwrap();
+        toast.success(`Welcome ${response.name}`);
+        navigate("/");
+      }
     } catch (error) {
       console.error("Google Sign-In Error:", error);
       
@@ -35,7 +62,6 @@ const GoogleSignInButton = () => {
       } else {
         toast.error(error.message || "Google Sign-In failed");
       }
-    } finally {
       setLoading(false);
     }
   };
@@ -75,3 +101,4 @@ const GoogleSignInButton = () => {
 };
 
 export default GoogleSignInButton;
+
