@@ -2,6 +2,7 @@ import TryCatch from "../middlewares/TryCatch.js";
 import { TelegramOTP } from "../models/TelegramOTP.js";
 import { User } from "../models/User.js";
 import { sendOTPToTelegram } from "../config/telegramHelper.js";
+import { redisClient } from "../config/redis.js";
 
 
 export const generateTelegramOTP = TryCatch(async (req, res) => {
@@ -144,6 +145,9 @@ export const verifyOTPFromWebsite = TryCatch(async (req, res) => {
     user.telegramLinkedAt = new Date();
     await user.save();
 
+    // Invalidate Redis user cache so fresh profile loads
+    await redisClient.del(`user:${user._id}`);
+
     res.json({
         message: "OTP verified successfully! Now send the OTP to your Telegram bot to complete linking.",
         telegramUsername: otpRecord.telegramUsername,
@@ -192,6 +196,9 @@ export const verifyTelegramOTPFromBot = async (otp, telegramUserId, telegramUser
 
     await TelegramOTP.deleteOne({ _id: otpRecord._id });
 
+    // Invalidate Redis user cache so fresh profile loads
+    await redisClient.del(`user:${user._id}`);
+
     return {
         success: true,
         message: `✅ Success! Your Telegram account has been linked to ${user.email}
@@ -232,6 +239,9 @@ export const unlinkTelegram = TryCatch(async (req, res) => {
     await user.save();
 
     await TelegramOTP.deleteMany({ userId });
+
+    // Invalidate Redis user cache so fresh profile loads
+    await redisClient.del(`user:${userId}`);
 
     res.json({
         message: `Telegram account @${telegramUsername} unlinked successfully`,
