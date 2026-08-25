@@ -5,7 +5,7 @@ import { parseExpenses } from "../config/expenseParser.js";
 
 export const addExpense = TryCatch(async (req, res) => {
     const userId = req.user._id;
-    const { amount, description, category, date, type } = req.body;
+    const { amount, description, category, date, type, partyName } = req.body;
 
     if (!amount || !description) {
         return res.status(400).json({
@@ -48,14 +48,21 @@ export const addExpense = TryCatch(async (req, res) => {
             : "Miscellaneous";
     }
 
+    const khataType = partyName
+        ? (transactionType === "debit" ? "to_receive" : "to_give")
+        : null;
+
     const expense = await Expense.create({
         userId,
+        telegramId: req.user.telegramUserId || null,
         amount,
         description,
         category: expenseCategory,
         type: transactionType,
         date: date ? new Date(date) : new Date(),
         source: "web",
+        partyName: partyName || null,
+        khataType,
     });
 
     res.status(201).json({
@@ -66,11 +73,11 @@ export const addExpense = TryCatch(async (req, res) => {
 
 export const addBulkExpenses = TryCatch(async (req, res) => {
     const userId = req.user._id;
-    const { transactions } = req.body;
+    const transactions = req.body.transactions || req.body.expenses;
 
     if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
         return res.status(400).json({
-            message: "Transactions array is required",
+            message: "Transactions array is required (key: 'transactions' or 'expenses')",
         });
     }
 
@@ -104,14 +111,21 @@ export const addBulkExpenses = TryCatch(async (req, res) => {
                 : "Miscellaneous";
         }
 
+        const khataType = txn.partyName
+            ? (transactionType === "debit" ? "to_receive" : "to_give")
+            : null;
+
         return {
             userId,
+            telegramId: req.user.telegramUserId || null,
             amount: txn.amount,
             description: txn.description,
             category: category,
             type: transactionType,
             date: txn.date ? new Date(txn.date) : new Date(),
             source: txn.source || "web",
+            partyName: txn.partyName || null,
+            khataType,
         };
     });
 
@@ -246,7 +260,7 @@ export const getExpenseSummary = TryCatch(async (req, res) => {
 export const updateExpense = TryCatch(async (req, res) => {
     const userId = req.user._id;
     const { id } = req.params;
-    const { amount, description, category, date, type } = req.body;
+    const { amount, description, category, date, type, partyName } = req.body;
 
     const expense = await Expense.findOne({ _id: id, userId });
 
@@ -261,6 +275,12 @@ export const updateExpense = TryCatch(async (req, res) => {
     if (category !== undefined) expense.category = category;
     if (date !== undefined) expense.date = new Date(date);
     if (type !== undefined) expense.type = type;
+    if (partyName !== undefined) {
+        expense.partyName = partyName || null;
+        expense.khataType = partyName
+            ? (expense.type === "debit" ? "to_receive" : "to_give")
+            : null;
+    }
 
     await expense.save();
 
@@ -337,6 +357,15 @@ export const saveExpensesFromTelegram = async (telegramUserId, messageText, opti
             };
         }
 
+        if (parsed.isDuplicate) {
+            return {
+                success: false,
+                isDuplicate: true,
+                message: "⚠️ <b>Duplicate Transaction Ignored</b>\n\nYeh transaction abhi kuch seconds pehle hi save hui thi! Double entry se bachane ke liye isse dobara add nahi kiya gaya.",
+                transactions: parsed.transactions,
+            };
+        }
+
         if (!parsed.transactions || parsed.transactions.length === 0) {
             return {
                 success: false,
@@ -382,11 +411,35 @@ export const saveExpensesFromTelegram = async (telegramUserId, messageText, opti
             };
         });
 
-        await Expense.insertMany(expensesToCreate);
+        // Check if a similar transaction (same amount) was recorded in the last 60 seconds
+        const sixtySecondsAgo = new Date(Date.now() - 60 * 1000);
+        let potentialDuplicate = null;
+
+        if (expensesToCreate.length === 1) {
+            const firstTxn = expensesToCreate[0];
+            const recentMatch = await Expense.findOne({
+                userId: user._id,
+                amount: firstTxn.amount,
+                createdAt: { $gte: sixtySecondsAgo }
+            }).sort({ createdAt: -1 });
+
+            if (recentMatch) {
+                const diffSec = Math.max(1, Math.round((Date.now() - new Date(recentMatch.createdAt).getTime()) / 1000));
+                potentialDuplicate = {
+                    previousDescription: recentMatch.description,
+                    timeDifferenceSeconds: diffSec,
+                    previousAmount: recentMatch.amount,
+                };
+            }
+        }
+
+        const createdExpenses = await Expense.insertMany(expensesToCreate);
 
         return {
             success: true,
             transactions: parsed.transactions,
+            createdExpenses,
+            potentialDuplicate,
             user: { name: user.name, email: user.email },
         };
     } catch (error) {

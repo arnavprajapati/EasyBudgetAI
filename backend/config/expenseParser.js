@@ -5,7 +5,7 @@ import crypto from "crypto";
 dotenv.config();
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "google/gemini-2.0-flash-001";
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "google/gemini-2.5-flash";
 
 const RATE_LIMIT_CONFIG = {
     userRequests: {
@@ -21,7 +21,7 @@ const RATE_LIMIT_CONFIG = {
         windowSeconds: 10,
     },
     deduplication: {
-        windowSeconds: 5,
+        windowSeconds: 15,
     },
     cooldownSeconds: 30,
 };
@@ -33,18 +33,32 @@ const generateRequestHash = (userId, messageText) => {
 };
 
 
-const isDuplicateRequest = async (userId, messageText) => {
+const acquireMessageLock = async (userId, messageText) => {
     try {
         const hash = generateRequestHash(userId, messageText);
-        const key = `gemini:dedup:${hash}`;
+        const lockKey = `gemini:dedup:${hash}`;
 
-        const exists = await redisClient.get(key);
-        if (exists) {
-            console.log(`🔄 Duplicate request detected for user ${userId}`);
-            return { isDuplicate: true, cachedResult: JSON.parse(exists) };
+        const acquired = await redisClient.set(
+            lockKey,
+            JSON.stringify({ status: "processing", timestamp: Date.now() }),
+            { NX: true, EX: RATE_LIMIT_CONFIG.deduplication.windowSeconds }
+        );
+
+        if (!acquired) {
+            console.log(`🔄 Duplicate request blocked by atomic lock for user ${userId}`);
+            const cached = await redisClient.get(lockKey);
+            let cachedResult = null;
+            try {
+                if (cached) cachedResult = JSON.parse(cached);
+            } catch (e) {}
+
+            return {
+                isDuplicate: true,
+                cachedResult: cachedResult?.status === "processing" ? null : cachedResult,
+            };
         }
 
-        return { isDuplicate: false };
+        return { isDuplicate: false, lockKey };
     } catch (error) {
         console.error("Deduplication check error:", error);
         return { isDuplicate: false };
@@ -56,10 +70,10 @@ const cacheRequestResult = async (userId, messageText, result) => {
         const hash = generateRequestHash(userId, messageText);
         const key = `gemini:dedup:${hash}`;
 
-        await redisClient.setEx(
+        await redisClient.set(
             key,
-            RATE_LIMIT_CONFIG.deduplication.windowSeconds,
-            JSON.stringify(result)
+            JSON.stringify(result),
+            { EX: RATE_LIMIT_CONFIG.deduplication.windowSeconds }
         );
     } catch (error) {
         console.error("Result caching error:", error);
@@ -280,10 +294,14 @@ export const parseExpenses = async (messageText, userId = null) => {
     }
 
     if (userId) {
-        const dupCheck = await isDuplicateRequest(userId, messageText);
-        if (dupCheck.isDuplicate && dupCheck.cachedResult) {
-            console.log(`✅ Returning cached result for user ${userId}`);
-            return dupCheck.cachedResult;
+        const dupCheck = await acquireMessageLock(userId, messageText);
+        if (dupCheck.isDuplicate) {
+            console.log(`✅ Duplicate request detected for user ${userId}`);
+            return {
+                date: new Date().toISOString().split("T")[0],
+                transactions: dupCheck.cachedResult?.transactions || [],
+                isDuplicate: true,
+            };
         }
 
         const rateLimitCheck = await checkAllRateLimits(userId);
@@ -552,10 +570,10 @@ export const formatExpenseResponse = (parsedData) => {
     }
 
     message += `━━━━━━━━━━━━━━━━━\n`;
-    if (receivables.length > 0) message += `� <b>Total Receivables:</b> +₹${totalReceivables}\n`;
+    if (receivables.length > 0) message += `📥 <b>Total Receivables:</b> +₹${totalReceivables}\n`;
     if (payables.length > 0) message += `📤 <b>Total Payables:</b> -₹${totalPayables}\n`;
-    if (income.length > 0) message += `💚 <b>Total Income:</b> +₹${totalIncome}\n`;
-    if (expenses.length > 0) message += `❤️ <b>Total Expenses:</b> -₹${totalExpenses}\n`;
+    if (income.length > 0) message += `📈 <b>Total Income:</b> +₹${totalIncome}\n`;
+    if (expenses.length > 0) message += `📉 <b>Total Expenses:</b> -₹${totalExpenses}\n`;
 
     return message;
 };
